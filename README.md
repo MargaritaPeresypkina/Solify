@@ -14,11 +14,11 @@ https://www.figma.com/design/0ltaLQbzLH3EYv9Liy0VDH/Solify?node-id=0-1&p=f&t=j5v
 - Intuitive Navigation – Easy-to-use bottom navigation bar for quick access between sections
 
 ### Tech Stack:
-Language: Kotlin
-UI Framework: Jetpack Compose
-Architecture: Clean Architecture + MVVM
-Dependency Injection: Hilt
-Local Database: Room
-Image Loading: Coil
-Authentication: Custom session manager with DataStore
-Navigation: Navigation Compose 
+- Language: Kotlin
+- UI Framework: Jetpack Compose
+- Architecture: Clean Architecture + MVVM
+- Dependency Injection: Hilt
+- Local Database: Room
+- Image Loading: Coil
+- Authentication: Custom session manager with DataStore
+- Navigation: Navigation Compose 
