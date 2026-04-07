@@ -22,5 +22,6 @@ data class TheoryItemDbModel(
     val id: String,
     val lessonId: String,
     val title: String,
-    val description: String
+    val description: String,
+    val order: Int
 )

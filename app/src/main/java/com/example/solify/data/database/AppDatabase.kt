@@ -41,7 +41,7 @@ import com.example.solify.data.db_models.UserProgressDbModel
         ExerciseDbModel::class,
         ExerciseAnswerOptionDbModel::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -65,7 +65,7 @@ abstract class AppDatabase : RoomDatabase() {
                     context = context,
                     klass = AppDatabase::class.java,
                     name = "solify.db"
-                ).build()
+                ).fallbackToDestructiveMigration(dropAllTables = true).build()
             }
         }
     }

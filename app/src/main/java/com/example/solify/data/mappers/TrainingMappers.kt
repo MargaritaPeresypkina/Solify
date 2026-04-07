@@ -4,7 +4,7 @@ import com.example.solify.data.db_models.ExerciseAnswerOptionDbModel
 import com.example.solify.data.db_models.ExerciseDbModel
 import com.example.solify.data.db_models.TrainingDbModel
 import com.example.solify.data.models.ExerciseWithOptions
-import com.example.solify.data.models.TrainingWithAllData
+import com.example.solify.data.models.TrainingWithExercises
 import com.example.solify.domain.entities.training.Exercise
 import com.example.solify.domain.entities.training.ExercisesAnswerOption
 import com.example.solify.domain.entities.training.Training
@@ -57,7 +57,7 @@ fun Training.toDbModel(): TrainingDbModel{
 }
 
 
-fun TrainingWithAllData.toDomain(): Training {
+fun TrainingWithExercises.toDomain(): Training {
     return Training(
         id = training.id,
         title = training.title,

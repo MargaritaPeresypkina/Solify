@@ -3,7 +3,6 @@ package com.example.solify.data.db_models
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
-import androidx.room.PrimaryKey
 
 @Entity(
     tableName = "user_progress",
@@ -13,10 +12,10 @@ import androidx.room.PrimaryKey
         childColumns = ["userId"],
         onDelete = ForeignKey.CASCADE
     )],
+    primaryKeys = ["userId"],
     indices = [Index(value = ["userId"], unique = true)]
 )
 data class UserProgressDbModel(
-    @PrimaryKey
     val userId: String,
     val completedLessons: String  //"lessonId1,lessonId2,lessonId3"
 )

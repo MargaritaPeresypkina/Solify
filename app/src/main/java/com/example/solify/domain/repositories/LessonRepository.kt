@@ -1,6 +1,8 @@
 package com.example.solify.domain.repositories
 
 import com.example.solify.domain.entities.lesson.Lesson
+import com.example.solify.domain.entities.lesson.Question
+import com.example.solify.domain.entities.lesson.Test
 import com.example.solify.domain.entities.lesson.TheoryItem
 import kotlinx.coroutines.flow.Flow
 
@@ -13,5 +15,9 @@ interface LessonRepository {
         theoryItemId: String
     ): Result<TheoryItem>
 
-    suspend fun getTheoryItemsByLesson(lessonId: String): Result<List<TheoryItem>>
+    suspend fun getTestById(testId: String): Result<Test>
+
+    suspend fun getQuestionById(questionId: String): Result<Question>
+
+    suspend fun getHint(questionId: String): Result<String>
 }

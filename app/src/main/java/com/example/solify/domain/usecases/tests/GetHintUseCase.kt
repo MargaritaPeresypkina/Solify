@@ -1,15 +1,14 @@
 package com.example.solify.domain.usecases.tests
 
-import com.example.solify.domain.repositories.TestRepository
+import com.example.solify.domain.repositories.LessonRepository
 import jakarta.inject.Inject
 
 class GetHintUseCase @Inject constructor(
-    private val repository: TestRepository
+    private val repository: LessonRepository
 ) {
     suspend operator fun invoke(
-        testId: String,
         questionId: String
     ): Result<String> {
-        return repository.getHint(questionId, testId)
+        return repository.getHint(questionId)
     }
 }

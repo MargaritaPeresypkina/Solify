@@ -12,13 +12,11 @@ import com.example.solify.data.dao.UserDao
 import com.example.solify.data.database.AppDatabase
 import com.example.solify.data.repositories.LessonRepositoryImpl
 import com.example.solify.data.repositories.ProgressRepositoryImpl
-import com.example.solify.data.repositories.TestRepositoryImpl
 import com.example.solify.data.repositories.TrainingRepositoryImpl
 import com.example.solify.data.repositories.UserRepositoryImpl
 import com.example.solify.data.session.SessionManagerImpl
 import com.example.solify.domain.repositories.LessonRepository
 import com.example.solify.domain.repositories.ProgressRepository
-import com.example.solify.domain.repositories.TestRepository
 import com.example.solify.domain.repositories.TrainingRepository
 import com.example.solify.domain.repositories.UserRepository
 import com.example.solify.domain.session.SessionManager
@@ -49,12 +47,6 @@ interface DataModule {
     fun bindProgressRepository(
         impl: ProgressRepositoryImpl
     ): ProgressRepository
-
-    @Singleton
-    @Binds
-    fun bindTestRepository(
-        impl: TestRepositoryImpl
-    ): TestRepository
 
     @Singleton
     @Binds
