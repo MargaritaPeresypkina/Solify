@@ -2,7 +2,6 @@ package com.example.solify.domain.usecases.auth
 
 import com.example.solify.domain.repositories.UserRepository
 import com.example.solify.domain.session.SessionManager
-import com.example.solify.domain.utils.verifyPassword
 import javax.inject.Inject
 
 class DeleteAccountUseCase @Inject constructor(
@@ -10,10 +9,10 @@ class DeleteAccountUseCase @Inject constructor(
     private val sessionManager: SessionManager
 ) {
     suspend operator fun invoke(currentPassword: String): Result<Boolean> {
-        return try {
-            val userId = sessionManager.getCurrentUserId()
-                ?: return Result.failure(IllegalStateException("Not logged in"))
+        val userId = sessionManager.getCurrentUserId()
+            ?: return Result.failure(IllegalStateException("Not logged in"))
 
+<<<<<<< Updated upstream
             val user = userRepository.getUserById(userId).getOrNull()
                 ?: return Result.failure(IllegalStateException("User not found del"))
 
@@ -29,7 +28,15 @@ class DeleteAccountUseCase @Inject constructor(
             Result.success(true)
         } catch (e: Exception) {
             Result.failure(Exception("Account deletion failed: ${e.message}"))
+=======
+        val result = userRepository.deleteUser(userId, currentPassword)
+
+        if (result.isSuccess && result.getOrNull() == true) {
+            sessionManager.clear()
+>>>>>>> Stashed changes
         }
+
+        return result
     }
 }
 

@@ -24,7 +24,8 @@ fun CustomTextField(
     onValueChange: (String) -> Unit,
     placeholder: String,
     isPassword: Boolean = false,
-    isError: Boolean = false
+    isError: Boolean = false,
+    supportingText: @Composable (() -> Unit)? = null
 ) {
     val visualTransformation = remember(isPassword) {
         if (isPassword) PasswordVisualTransformation() else VisualTransformation.None
@@ -60,7 +61,8 @@ fun CustomTextField(
             unfocusedIndicatorColor = Grey200,
             disabledIndicatorColor = Grey200
         ),
-        singleLine = true
+        singleLine = true,
+        supportingText = supportingText
     )
 }
 

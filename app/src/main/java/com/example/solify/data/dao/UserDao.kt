@@ -15,10 +15,15 @@ interface UserDao {
     @Query("SELECT * FROM users WHERE email = :email")
     suspend fun getUserByEmail(email: String): UserDbModel?
 
-    // получение текущего пользователя
     @Query("SELECT * FROM users WHERE id = :userId")
-    fun getUserById(userId: String): Flow<UserDbModel>
+    fun observeUserById(userId: String): Flow<UserDbModel?>
 
+<<<<<<< Updated upstream:app/src/main/java/com/example/solify/data/dao/UserDao.kt
+=======
+    @Query("SELECT * FROM users WHERE id = :userId")
+    suspend fun getUserById(userId: String): UserDbModel?
+
+>>>>>>> Stashed changes:app/src/main/java/com/example/solify/data/local/dao/UserDao.kt
     // Для RegisterUserUseCase
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertUser(user: UserDbModel)

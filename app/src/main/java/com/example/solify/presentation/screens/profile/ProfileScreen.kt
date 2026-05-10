@@ -1,5 +1,6 @@
 package com.example.solify.presentation.screens.profile
 
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -28,6 +29,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -50,7 +52,6 @@ fun ProfileScreen(
     viewModel: ProfileViewModel = hiltViewModel(),
     onLogoutComplete: () -> Unit
 ) {
-
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val user = uiState.user
 
@@ -65,9 +66,9 @@ fun ProfileScreen(
     }
 
     LaunchedEffect(uiState.isLoggedOut) {
+        Log.d("launch", "launch")
         if (uiState.isLoggedOut) {
             onLogoutComplete()
-            viewModel.processCommand(ProfileCommand.ResetState)
         }
     }
 
@@ -81,6 +82,9 @@ fun ProfileScreen(
     )
 
     val avatarSize = 94
+    val offset = remember { (-94/2).dp }
+    val heightAvatar = remember { (avatarSize/2 + 18).dp }
+
 
     Scaffold(
         bottomBar = {
@@ -130,7 +134,6 @@ fun ProfileScreen(
                                     imagePicker.launch("image/*")
                                 }
                         ) {
-
                             AvatarImage(
                                 imageUrl = user?.avatarUrl,
                                 onClick = {
@@ -145,7 +148,7 @@ fun ProfileScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .offset(y = (-(avatarSize/2)).dp)
+                        .offset(y = offset)
                         .clip(RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp))
                         .background(MaterialTheme.colorScheme.primary)
                         .padding(horizontal = 24.dp)
@@ -167,7 +170,7 @@ fun ProfileScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Spacer(Modifier.height((avatarSize/2 + 18).dp))
+                            Spacer(Modifier.height(heightAvatar))
                             Text(
                                 "${user?.surname} ${user?.name}",
                                 color = MaterialTheme.colorScheme.onPrimary,

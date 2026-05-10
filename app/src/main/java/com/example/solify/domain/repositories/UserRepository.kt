@@ -7,7 +7,9 @@ interface UserRepository {
 
     suspend fun getUserById(userId: String): Result<User?>
 
-    suspend fun updateUser(user: User): Result<Unit>
+    fun observeUserById(userId: String): Flow<User?>
+
+    suspend fun updateUser(userId: String, name: String, surname: String, email: String): Result<User>
 
     suspend fun isEmailExists(email: String): Result<Boolean>
 
@@ -15,7 +17,11 @@ interface UserRepository {
 
     suspend fun getUserByEmail(email: String): Result<User?>
 
+<<<<<<< Updated upstream
     fun observeUserById(userId: String): Flow<User?>
 
     suspend fun deleteUser(userId: String): Result<Unit>
+=======
+    suspend fun deleteUser(userId: String, password: String): Result<Boolean>
+>>>>>>> Stashed changes
 }

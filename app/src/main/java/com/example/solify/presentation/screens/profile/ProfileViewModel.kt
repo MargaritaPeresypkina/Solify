@@ -1,19 +1,20 @@
 package com.example.solify.presentation.screens.profile
 
-import android.util.Log
 import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.solify.domain.entities.user.User
 import com.example.solify.domain.usecases.auth.LogoutUserUseCase
-import com.example.solify.domain.usecases.auth.ObserveCurrentUserUseCase
-import com.example.solify.domain.usecases.auth.RefreshCurrentUserUseCase
+import com.example.solify.domain.usecases.user.GetCurrentUserUseCase
+import com.example.solify.domain.usecases.user.ObserveCurrentUserUseCase
 import com.example.solify.domain.usecases.user.UpdateUserAvatarUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -21,20 +22,24 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
-    private val observeCurrentUserUseCase: ObserveCurrentUserUseCase,
-    private val refreshCurrentUserUseCase: RefreshCurrentUserUseCase,
+    observeCurrentUserUseCase: ObserveCurrentUserUseCase,
     private val logoutUserUseCase: LogoutUserUseCase,
     private val updateUserAvatarUseCase: UpdateUserAvatarUseCase
 ) : ViewModel() {
+
     private val _uiState = MutableStateFlow(ProfileUiState(isLoading = true))
     val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
 
+    private val userFlow = observeCurrentUserUseCase()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = null
+        )
+
     init {
-
-        Log.d("ProfileScreen", "init")
-        viewModelScope.launch(Dispatchers.IO) {
-            observeCurrentUserUseCase(viewModelScope).collect { user ->
-                Log.d("ProfileViewModel", "User updated: $user")
+        viewModelScope.launch {
+            userFlow.collect { user ->
                 _uiState.update {
                     it.copy(
                         user = user,
@@ -42,26 +47,6 @@ class ProfileViewModel @Inject constructor(
                     )
                 }
             }
-        }
-
-        viewModelScope.launch(Dispatchers.IO) {
-            refreshCurrentUserUseCase().onSuccess { user ->
-                _uiState.update {
-                    it.copy(
-                        user = user,
-                        isLoading = false
-                    )
-                }
-            }
-        }
-
-    }
-
-    fun processCommand(command: ProfileCommand) {
-        when (command) {
-            is ProfileCommand.UploadAvatarImage -> uploadAvatarImage(command.imageUri)
-            is ProfileCommand.OnLogoutClick -> logout()
-            is ProfileCommand.ResetState -> resetState()
         }
     }
 
@@ -110,12 +95,14 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    private fun resetState() {
-        _uiState.update { state ->
-            state.copy(isLoggedOut = false)
+    fun processCommand(command: ProfileCommand) {
+        when (command) {
+            is ProfileCommand.UploadAvatarImage -> uploadAvatarImage(command.imageUri)
+            is ProfileCommand.OnLogoutClick -> logout()
         }
     }
 }
+
 
 @Stable
 data class ProfileUiState(
@@ -129,5 +116,4 @@ data class ProfileUiState(
 sealed class ProfileCommand {
     data class UploadAvatarImage(val imageUri: String) : ProfileCommand()
     object OnLogoutClick : ProfileCommand()
-    object ResetState : ProfileCommand()
 }
