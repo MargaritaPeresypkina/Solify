@@ -15,14 +15,18 @@ class UserLocalDataSource @Inject constructor(
 ) {
 
     fun observeUserById(userId: String): Flow<User?> {
-        return userDao.observeUserById(userId).map { userDb ->
-            userDb?.toDomain()
+        return userDao.getUserById(userId).map { userDb ->
+            try {
+                userDb.toDomain()
+            } catch (e: Exception) {
+                throw DataSourceException.MappingError("Failed to map user $userId", e)
+            }
         }
     }
 
     suspend fun getUserById(userId: String): User {
         return try {
-            val userDb = userDao.getUserById(userId)
+            val userDb = userDao.getUserByIdSuspend(userId)
             userDb?.toDomain() ?: throw Exception("User not found")
         } catch (e: Exception) {
             throw DataSourceException.DatabaseError("Failed to get user by id $userId", e)
@@ -53,7 +57,7 @@ class UserLocalDataSource @Inject constructor(
             throw DataSourceException.DatabaseError("Failed to insert user", e)
         }
     }
-    
+
     suspend fun updateUser(user: User) {
         try {
             userDao.updateUser(user.toDbModel())
@@ -61,7 +65,7 @@ class UserLocalDataSource @Inject constructor(
             throw DataSourceException.DatabaseError("Failed to update user", e)
         }
     }
-    
+
     suspend fun deleteUser(userId: String) {
         try {
             userDao.deleteUser(userId)

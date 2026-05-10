@@ -24,8 +24,9 @@ class EditProfileViewModel @Inject constructor(
     private val getCurrentUserUseCase: GetCurrentUserUseCase,
     private val updateUserProfileUseCase: UpdateUserProfileUseCase,
     private val updateUserAvatarUseCase: UpdateUserAvatarUseCase,
-    private val deleteUserAvatarUseCase: DeleteUserAvatarUseCase,
-    private val deleteAccountUseCase: DeleteAccountUseCase
+    private val deleteAccountUseCase: DeleteAccountUseCase,
+    private val deleteUserAvatarUseCase: DeleteUserAvatarUseCase
+
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(EditProfileUiState(isLoading = true))

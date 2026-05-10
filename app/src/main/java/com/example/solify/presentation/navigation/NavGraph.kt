@@ -64,12 +64,6 @@ fun NavGraph(
         }
 
         composable(Screen.Register.route) {
-<<<<<<< Updated upstream
-            SideEffect {
-                Log.d("NavGraph ", "Register")
-            }
-=======
->>>>>>> Stashed changes
             RegisterScreen(
                 onRegisterSuccess = {
                     val route = Screen.Profile.route
@@ -89,6 +83,9 @@ fun NavGraph(
                     navController.navigate(Screen.AuthChoice.route) {
                         popUpTo(Screen.AuthChoice.route) { inclusive = true }
                     }
+                },
+                onEditProfile = {
+                    navController.navigate(Screen.EditProfile.route)
                 }
             )
         }
@@ -121,6 +118,8 @@ sealed class Screen(val route: String) {
     data object Login : Screen("login")
     data object Register : Screen("register")
     data object Profile : Screen("profile")
+
+    data object EditProfile : Screen("edit_profile")
     data object Training : Screen("training")
     data object Main : Screen("main")
 }

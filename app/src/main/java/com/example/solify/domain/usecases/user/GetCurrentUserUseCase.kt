@@ -12,7 +12,7 @@ class GetCurrentUserUseCase @Inject constructor(
     suspend operator fun invoke(): Result<User> {
         val userId = sessionManager.getCurrentUserId()
             ?: return Result.failure(IllegalStateException("Not logged in"))
-        
+
         return userRepository.getUserById(userId)
     }
 }

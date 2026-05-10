@@ -1,20 +1,14 @@
 [versions]
 agp = "9.0.1"
 bcrypt = "0.10.2"
-<<<<<<< Updated upstream
-=======
 bom = "3.6.0"
->>>>>>> Stashed changes
 coreKtx = "1.18.0"
 datastorePreferences = "1.2.1"
 hiltAndroid = "2.59.2"
 junit = "4.13.2"
 junitVersion = "1.3.0"
 espressoCore = "3.7.0"
-<<<<<<< Updated upstream
-=======
 ktor = "3.4.3"
->>>>>>> Stashed changes
 lifecycleRuntimeKtx = "2.10.0"
 activityCompose = "1.13.0"
 kotlin = "2.3.21"
@@ -26,13 +20,13 @@ hiltNavigation = "1.3.0"
 splashscreen = "1.2.0"
 coil = "2.7.0"
 material-icons = "1.7.8"
-<<<<<<< Updated upstream
-=======
 gms = "4.4.4"
 firebase-bom ="34.13.0"
->>>>>>> Stashed changes
-
 [libraries]
+
+firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebase-bom"}
+firebase-auth = { module = "com.google.firebase:firebase-auth" }
+firebase-firestore = { module = "com.google.firebase:firebase-firestore" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastorePreferences" }
 bcrypt = { module = "at.favre.lib:bcrypt", version.ref = "bcrypt" }
@@ -59,9 +53,14 @@ androidx-hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navig
 androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "splashscreen"}
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil"}
 androidx-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "material-icons"}
+bom = { module = "io.github.jan-tennert.supabase:bom", version.ref = "bom" }
+storage-kt = { module = "io.github.jan-tennert.supabase:storage-kt" }
+ktor-client-android = { module = "io.ktor:ktor-client-android", version.ref = "ktor" }
+
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 hilt-android = { id = "com.google.dagger.hilt.android", version.ref = "hiltAndroid" }
-
+gms = { id = "com.google.gms.google-services", version.ref = "gms" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }

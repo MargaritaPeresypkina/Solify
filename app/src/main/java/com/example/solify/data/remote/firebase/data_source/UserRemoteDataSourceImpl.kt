@@ -38,7 +38,7 @@ class UserRemoteDataSource @Inject constructor(
             }
         }
     }
-    
+
     suspend fun updateUserProfile(user: User): Result<Unit> {
         return withContext(Dispatchers.IO) {
             try {
@@ -47,7 +47,7 @@ class UserRemoteDataSource @Inject constructor(
                     "surname" to user.surname,
                     "email" to user.email
                 )
-                
+
                 user.avatarUrl?.let {
                     updates["avatarUrl"] = it
                 }
@@ -72,7 +72,7 @@ class UserRemoteDataSource @Inject constructor(
             false
         }
     }
-    
+
     suspend fun uploadAvatar(userId: String, imageFile: File): Result<String> {
         return withContext(Dispatchers.IO) {
             try {
@@ -85,7 +85,7 @@ class UserRemoteDataSource @Inject constructor(
                 )
                 val publicUrl = supabaseStorage.from("SolifyAvatars").publicUrl(fileName)
                 firestore.collection("users").document(userId).update("avatarUrl", publicUrl).await()
-                
+
                 Result.success(publicUrl)
             } catch (e: Exception) {
 
@@ -93,29 +93,29 @@ class UserRemoteDataSource @Inject constructor(
             }
         }
     }
-    
+
     suspend fun deleteAvatar(userId: String): Result<Unit> {
         return withContext(Dispatchers.IO) {
             try {
                 val userDoc = firestore.collection("users").document(userId).get().await()
                 val currentAvatarUrl = userDoc.getString("avatarUrl")
-                
+
                 if (currentAvatarUrl != null && currentAvatarUrl.isNotEmpty()) {
                     val path = extractPathFromUrl(currentAvatarUrl)
                     if (path != null) {
                         supabaseStorage.from("SolifyAvatars").delete(listOf(path))
                     }
                 }
-                
+
                 firestore.collection("users").document(userId).update("avatarUrl", "").await()
-                
+
                 Result.success(Unit)
             } catch (e: Exception) {
                 Result.failure(e)
             }
         }
     }
-    
+
     private fun extractPathFromUrl(url: String): String? {
         return try {
             val pattern = "/storage/v1/object/public/avatars/(.+)".toRegex()

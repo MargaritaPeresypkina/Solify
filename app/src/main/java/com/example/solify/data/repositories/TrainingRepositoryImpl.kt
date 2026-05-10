@@ -1,9 +1,9 @@
 package com.example.solify.data.repositories
 
-import com.example.solify.data.dao.TrainingDao
-import com.example.solify.data.mappers.toDomain
-import com.example.solify.data.models.ExerciseWithOptions
-import com.example.solify.data.models.TrainingWithExercises
+import com.example.solify.data.local.dao.TrainingDao
+import com.example.solify.data.local.mappers.toDomain
+import com.example.solify.data.local.models.ExerciseWithOptions
+import com.example.solify.data.local.models.TrainingWithExercises
 import com.example.solify.domain.entities.training.Exercise
 import com.example.solify.domain.entities.training.Training
 import com.example.solify.domain.repositories.TrainingRepository

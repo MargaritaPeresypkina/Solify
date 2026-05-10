@@ -1,50 +1,27 @@
 package com.example.solify.data.repositories
 
-<<<<<<< Updated upstream
-import com.example.solify.data.dao.UserDao
-import com.example.solify.data.mappers.toDbModel
-import com.example.solify.data.mappers.toDomain
-=======
 import android.util.Log
 import com.example.solify.data.local.data_sources.UserLocalDataSource
 import com.example.solify.data.remote.firebase.auth_service.FirebaseAuthService
 import com.example.solify.data.remote.firebase.data_source.UserRemoteDataSource
->>>>>>> Stashed changes
 import com.example.solify.domain.entities.user.User
 import com.example.solify.domain.repositories.UserRepository
+import com.example.solify.domain.utils.hashPassword
+import com.example.solify.domain.utils.verifyPassword
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-<<<<<<< Updated upstream
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.map
-=======
 import kotlinx.coroutines.withContext
 import java.io.File
->>>>>>> Stashed changes
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class UserRepositoryImpl @Inject constructor(
-    private val userDao: UserDao
+    private val localDataSource: UserLocalDataSource,
+    private val remoteAuthService: FirebaseAuthService,
+    private val userRemoteDataSource: UserRemoteDataSource
 ) : UserRepository {
 
-<<<<<<< Updated upstream
-    override suspend fun getUserById(userId: String): Result<User?> {
-        return try {
-            val userDb = userDao.getUserById(userId).firstOrNull()
-            Result.success(userDb?.toDomain())
-        } catch (e: Exception) {
-            Result.failure(Exception("Failed to get user: ${e.message}"))
-        }
-    }
-
-    override suspend fun updateUser(user: User): Result<Unit> {
-        return try {
-            userDao.updateUser(user.toDbModel())
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(Exception("Failed to update user: ${e.message}"))
-=======
     override fun observeUserById(userId: String): Flow<User?> {
         return localDataSource.observeUserById(userId)
     }
@@ -76,7 +53,7 @@ class UserRepositoryImpl @Inject constructor(
                     Result.failure(Exception("User not found"))
                 }
             } catch (e: Exception) {
-                Result.failure(DomainException.DataError("Failed to get user: ${e.message}", e))
+                Result.failure(Exception("Failed to get user: ${e.message}", e))
             }
         }
     }
@@ -112,30 +89,62 @@ class UserRepositoryImpl @Inject constructor(
 
                 Result.success(updatedUser)
             } catch (e: Exception) {
-                Result.failure(DomainException.DataError("Failed to update profile: ${e.message}", e))
+                Result.failure(Exception("Failed to update profile: ${e.message}", e))
             }
->>>>>>> Stashed changes
         }
     }
+
+    override suspend fun updateUserAvatar(userId: String, avatarFile: File): Result<String> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val avatarUrl = userRemoteDataSource.uploadAvatar(userId, avatarFile).getOrThrow()
+                Log.d("ava", "avatarUrl $avatarUrl")
+                val currentUser = getUserById(userId).getOrNull()
+                Log.d("ava", "currentUser $currentUser")
+
+                if (currentUser != null) {
+                    val updatedUser = currentUser.copy(avatarUrl = avatarUrl)
+                    Log.d("ava", "updatedUser $updatedUser")
+                    localDataSource.updateUser(updatedUser)
+                }
+
+                Result.success(avatarUrl)
+            } catch (e: Exception) {
+                Result.failure(Exception("Avatar upload failed: ${e.message}"))
+            }
+        }
+    }
+
+    override suspend fun deleteUserAvatar(userId: String): Result<Unit> {
+        return withContext(Dispatchers.IO) {
+            try {
+                userRemoteDataSource.deleteAvatar(userId).getOrThrow()
+
+                val currentUser = getUserById(userId).getOrNull()
+                if (currentUser != null) {
+                    val updatedUser = currentUser.copy(avatarUrl = null)
+                    localDataSource.updateUser(updatedUser)
+                }
+
+                Result.success(Unit)
+            } catch (e: Exception) {
+                Result.failure(Exception("Avatar deletion failed: ${e.message}"))
+            }
+        }
+    }
+
 
 
     override suspend fun isEmailExists(email: String): Result<Boolean> {
-        return try {
-            val user = userDao.getUserByEmail(email)
-            Result.success(user != null)
-        } catch (e: Exception) {
-            Result.failure(Exception("Failed to check email: ${e.message}"))
+        return withContext(Dispatchers.IO) {
+            try {
+                Result.success(userRemoteDataSource.isEmailExists(email))
+            } catch (e: Exception) {
+                Result.failure(Exception("Failed to check email: ${e.message}", e))
+            }
         }
     }
 
-<<<<<<< Updated upstream
-    override suspend fun registerUser(user: User): Result<Unit> {
-        return try {
-            userDao.insertUser(user.toDbModel())
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(Exception("Failed to save user: ${e.message}"))
-=======
     override suspend fun registerUser(
         email: String,
         password: String,
@@ -218,54 +227,41 @@ class UserRepositoryImpl @Inject constructor(
             } catch (e: Exception) {
                 Result.failure(Exception("Logout failed: ${e.message}"))
             }
->>>>>>> Stashed changes
         }
     }
 
     override suspend fun getUserByEmail(email: String): Result<User?> {
-        return try {
-            val userDb = userDao.getUserByEmail(email)
-            Result.success(userDb?.toDomain())
-        } catch (e: Exception) {
-            Result.failure(Exception("Failed to get user: ${e.message}"))
+        return withContext(Dispatchers.IO) {
+            try {
+                val cachedUser = runCatching { localDataSource.getUserByEmail(email) }.getOrNull()
+
+                if (cachedUser != null) {
+                    return@withContext Result.success(cachedUser)
+                }
+
+                Result.success(null)
+            } catch (e: Exception) {
+                Result.failure(Exception("Failed to get user: ${e.message}", e))
+            }
         }
     }
 
-<<<<<<< Updated upstream
-    override fun observeUserById(userId: String): Flow<User?> {
-        return userDao.getUserById(userId).map { it.toDomain() }
-    }
-
-    override suspend fun deleteUser(userId: String): Result<Unit> {
-        return try {
-            userDao.deleteUser(userId)
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(Exception("Failed to delete user: ${e.message}"))
-=======
     override suspend fun deleteUser(userId: String, password: String): Result<Boolean> {
         return withContext(Dispatchers.IO) {
             try {
-                Log.d("test1", "deleteUser start")
-
                 val user = getUserById(userId).getOrNull()
                     ?: return@withContext Result.failure(IllegalStateException("User not found"))
-                Log.d("test1", "user $user")
 
-                Log.d("test1", "!verifyPassword(password, user.passwordHash) ${!verifyPassword(password, user.passwordHash)}")
                 if (!verifyPassword(password, user.passwordHash)) {
                     return@withContext Result.success(false)
                 }
-
                 remoteAuthService.reauthenticateAndDeleteUser(password).getOrThrow()
                 localDataSource.deleteUser(userId)
 
                 Result.success(true)
             } catch (e: Exception) {
-                Log.d("test1", "e $e")
                 Result.failure(Exception("Account deletion failed: ${e.message}"))
             }
->>>>>>> Stashed changes
         }
     }
 }

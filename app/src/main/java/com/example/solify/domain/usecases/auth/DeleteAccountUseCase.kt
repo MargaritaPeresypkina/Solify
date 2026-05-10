@@ -12,28 +12,10 @@ class DeleteAccountUseCase @Inject constructor(
         val userId = sessionManager.getCurrentUserId()
             ?: return Result.failure(IllegalStateException("Not logged in"))
 
-<<<<<<< Updated upstream
-            val user = userRepository.getUserById(userId).getOrNull()
-                ?: return Result.failure(IllegalStateException("User not found del"))
-
-            if (!verifyPassword(currentPassword, user.passwordHash)) {
-                return Result.success(false)
-            }
-
-            userRepository.deleteUser(userId).getOrNull()
-                ?: return Result.failure(Exception("Failed to delete account"))
-
-            sessionManager.clear()
-
-            Result.success(true)
-        } catch (e: Exception) {
-            Result.failure(Exception("Account deletion failed: ${e.message}"))
-=======
         val result = userRepository.deleteUser(userId, currentPassword)
 
         if (result.isSuccess && result.getOrNull() == true) {
             sessionManager.clear()
->>>>>>> Stashed changes
         }
 
         return result

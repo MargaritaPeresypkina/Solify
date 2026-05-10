@@ -39,6 +39,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -146,7 +147,7 @@ fun EditProfileScreen(
                         )
 
                         Text(
-                            text = "Save",
+                            text = stringResource(R.string.save),
                             color = MaterialTheme.colorScheme.onPrimary,
                             style = MaterialTheme.typography.titleLarge,
                             modifier = Modifier.clickable {
@@ -155,7 +156,7 @@ fun EditProfileScreen(
                         )
                     }
                     Text(
-                        text = "Edit Profile",
+                        text = stringResource(R.string.edit_profile),
                         color = MaterialTheme.colorScheme.onPrimary,
                         style = MaterialTheme.typography.labelMedium
                     )
@@ -185,7 +186,8 @@ fun EditProfileScreen(
                                 modifier = Modifier
                                     .clip(CircleShape)
                                     .size(94.dp)
-                                    .background(Grey300)
+                                    .background(Grey300),
+                                contentAlignment = Alignment.Center
                             ) {
                                 if (!uiState.avatarUrl.isNullOrEmpty()) {
                                     AsyncImage(

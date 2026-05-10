@@ -17,35 +17,12 @@ class RegisterUserUseCase @Inject constructor(
         email: String,
         password: String
     ): Result<User> {
-        return try {
-            val existingUser = userRepository.getUserByEmail(email).getOrNull()
-            if (existingUser != null) {
-                return Result.failure(IllegalArgumentException("Email already registered"))
-            }
+        val result = userRepository.registerUser(email, password, name, surname)
 
-            if (password.length < 6) {
-                return Result.failure(IllegalArgumentException("Password must be at least 6 characters"))
-            }
-
-            val passwordHash = hashPassword(password)
-
-            val user = User(
-                id = UUID.randomUUID().toString(),
-                name = name,
-                surname = surname,
-                email = email,
-                passwordHash = passwordHash,
-                avatarUrl = null
-            )
-
-            userRepository.registerUser(user).getOrNull()
-                ?: return Result.failure(Exception("Failed to save user"))
-
+        result.onSuccess { user ->
             sessionManager.saveUserId(user.id)
-
-            Result.success(user)
-        } catch (e: Exception) {
-            Result.failure(Exception("Registration failed: ${e.message}"))
         }
+
+        return result
     }
 }

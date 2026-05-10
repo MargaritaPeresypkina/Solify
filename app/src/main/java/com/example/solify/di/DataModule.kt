@@ -5,11 +5,12 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStoreFile
-import com.example.solify.data.dao.LessonDao
-import com.example.solify.data.dao.ProgressDao
-import com.example.solify.data.dao.TrainingDao
-import com.example.solify.data.dao.UserDao
-import com.example.solify.data.database.AppDatabase
+import com.example.solify.BuildConfig
+import com.example.solify.data.local.dao.LessonDao
+import com.example.solify.data.local.dao.ProgressDao
+import com.example.solify.data.local.dao.TrainingDao
+import com.example.solify.data.local.dao.UserDao
+import com.example.solify.data.local.database.AppDatabase
 import com.example.solify.data.repositories.LessonRepositoryImpl
 import com.example.solify.data.repositories.ProgressRepositoryImpl
 import com.example.solify.data.repositories.TrainingRepositoryImpl
@@ -20,16 +21,24 @@ import com.example.solify.domain.repositories.ProgressRepository
 import com.example.solify.domain.repositories.TrainingRepository
 import com.example.solify.domain.repositories.UserRepository
 import com.example.solify.domain.session.SessionManager
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import io.github.jan.supabase.SupabaseClient
+import io.github.jan.supabase.createSupabaseClient
+import io.github.jan.supabase.storage.Storage
+import io.github.jan.supabase.storage.storage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import javax.inject.Singleton
+
+
 
 
 @Module
@@ -123,6 +132,35 @@ interface DataModule {
                 scope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
                 produceFile = { context.preferencesDataStoreFile("user_preferences") }
             )
+        }
+
+        @Provides
+        @Singleton
+        fun provideSupabaseClient(): SupabaseClient {
+            return createSupabaseClient(
+                supabaseUrl = BuildConfig.SUPABASE_URL,
+                supabaseKey = BuildConfig.SUPABASE_PUBLISHABLE_KEY
+            ) {
+                install(Storage)
+            }
+        }
+
+        @Provides
+        @Singleton
+        fun provideSupabaseStorage(client: SupabaseClient): Storage {
+            return client.storage
+        }
+
+        @Provides
+        @Singleton
+        fun provideFirebaseAuth(): FirebaseAuth {
+            return FirebaseAuth.getInstance()
+        }
+
+        @Provides
+        @Singleton
+        fun provideFirebaseFirestore(): FirebaseFirestore {
+            return FirebaseFirestore.getInstance()
         }
 
     }

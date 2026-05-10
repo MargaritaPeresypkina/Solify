@@ -1,11 +1,8 @@
 package com.example.solify.data.remote.firebase.auth_service
 
 import android.util.Log
-import com.example.solify.data.remote.firebase.dto.UserDto
-import com.example.solify.data.remote.firebase.mappers.toDomain
 import com.example.solify.data.remote.firebase.mappers.toDto
 import com.example.solify.domain.entities.user.User
-import com.example.solify.domain.utils.hashPassword
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthException

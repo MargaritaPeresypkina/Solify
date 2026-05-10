@@ -1,8 +1,8 @@
 package com.example.solify.data.repositories
 
-import com.example.solify.data.dao.LessonDao
-import com.example.solify.data.mappers.toDomain
-import com.example.solify.data.mappers.toLessonsDomain
+import com.example.solify.data.local.dao.LessonDao
+import com.example.solify.data.local.mappers.toDomain
+import com.example.solify.data.local.mappers.toLessonsDomain
 import com.example.solify.domain.entities.lesson.Lesson
 import com.example.solify.domain.entities.lesson.Question
 import com.example.solify.domain.entities.lesson.Test

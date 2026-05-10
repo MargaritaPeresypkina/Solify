@@ -50,8 +50,10 @@ fun ProfileScreen(
     modifier: Modifier = Modifier,
     navController: NavController,
     viewModel: ProfileViewModel = hiltViewModel(),
-    onLogoutComplete: () -> Unit
+    onLogoutComplete: () -> Unit,
+    onEditProfile: () -> Unit
 ) {
+
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val user = uiState.user
 
@@ -82,9 +84,6 @@ fun ProfileScreen(
     )
 
     val avatarSize = 94
-    val offset = remember { (-94/2).dp }
-    val heightAvatar = remember { (avatarSize/2 + 18).dp }
-
 
     Scaffold(
         bottomBar = {
@@ -134,6 +133,7 @@ fun ProfileScreen(
                                     imagePicker.launch("image/*")
                                 }
                         ) {
+
                             AvatarImage(
                                 imageUrl = user?.avatarUrl,
                                 onClick = {
@@ -148,7 +148,7 @@ fun ProfileScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .offset(y = offset)
+                        .offset(y = (-(avatarSize/2)).dp)
                         .clip(RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp))
                         .background(MaterialTheme.colorScheme.primary)
                         .padding(horizontal = 24.dp)
@@ -170,7 +170,7 @@ fun ProfileScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Spacer(Modifier.height(heightAvatar))
+                            Spacer(Modifier.height((avatarSize/2 + 18).dp))
                             Text(
                                 "${user?.surname} ${user?.name}",
                                 color = MaterialTheme.colorScheme.onPrimary,
@@ -183,7 +183,7 @@ fun ProfileScreen(
                                 style = MaterialTheme.typography.titleSmall,
                                 modifier = Modifier
                                     .clickable{
-                                        // TODO
+                                        onEditProfile()
                                     },
                             )
                         }

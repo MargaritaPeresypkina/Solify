@@ -1,11 +1,11 @@
 package com.example.solify.data.repositories
 
-import com.example.solify.data.dao.ProgressDao
-import com.example.solify.data.db_models.LessonProgressDbModel
-import com.example.solify.data.db_models.TestProgressDbModel
-import com.example.solify.data.db_models.UserProgressDbModel
-import com.example.solify.data.mappers.toDomain
-import com.example.solify.data.mappers.toSet
+import com.example.solify.data.local.dao.ProgressDao
+import com.example.solify.data.local.db_models.LessonProgressDbModel
+import com.example.solify.data.local.db_models.TestProgressDbModel
+import com.example.solify.data.local.db_models.UserProgressDbModel
+import com.example.solify.data.local.mappers.toDomain
+import com.example.solify.data.local.mappers.toSet
 import com.example.solify.domain.entities.progress.LessonProgress
 import com.example.solify.domain.entities.progress.TestProgress
 import com.example.solify.domain.entities.progress.UserProgress

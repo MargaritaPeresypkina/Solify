@@ -19,32 +19,28 @@ class UpdateUserAvatarUseCase @Inject constructor(
             val userId = sessionManager.getCurrentUserId()
                 ?: return Result.failure(IllegalStateException("Not logged in"))
 
-            val currentUser = userRepository.getUserById(userId).getOrNull()
-                ?: return Result.failure(IllegalStateException("User not found"))
+            val tempFile = saveImageToTempFile(imageUri.toUri())
 
-            val savedPath = copyImageToAppStorage(imageUri.toUri(), context)
+            val result = userRepository.updateUserAvatar(userId, tempFile)
 
-            val updatedUser = currentUser.copy(avatarUrl = savedPath)
+            tempFile.delete()
 
-            userRepository.updateUser(updatedUser).getOrNull()
-                ?: return Result.failure(Exception("Failed to save avatar"))
-
-            Result.success(savedPath)
+            result
         } catch (e: Exception) {
             Result.failure(Exception("Avatar upload failed: ${e.message}"))
         }
     }
-}
 
-private fun copyImageToAppStorage(uri: Uri, context: Context): String {
-    val fileName = "avatar_${System.currentTimeMillis()}.jpg"
-    val file = File(context.filesDir, fileName)
+    private fun saveImageToTempFile(uri: Uri): File {
+        val tempFile = File.createTempFile("avatar_upload", ".jpg")
+        val contentResolver = context.contentResolver
 
-    context.contentResolver.openInputStream(uri)?.use { input ->
-        FileOutputStream(file).use { output ->
-            input.copyTo(output)
-        }
-    } ?: throw Exception("Failed to copy image")
+        contentResolver.openInputStream(uri)?.use { input ->
+            FileOutputStream(tempFile).use { output ->
+                input.copyTo(output)
+            }
+        } ?: throw Exception("Failed to read image")
 
-    return file.absolutePath
+        return tempFile
+    }
 }
