@@ -18,15 +18,13 @@ class LoginUserUseCase @Inject constructor(
     ): Result<User> {
         return withContext(Dispatchers.IO) {
             try {
-                val user = userRepository.getUserByEmail(email).getOrNull()
-                    ?: return@withContext Result.failure(IllegalArgumentException("User not found"))
+                val authResult = userRepository.loginUser(email, password)
 
-                if (!verifyPassword(password, user.passwordHash)) {
-                    return@withContext Result.failure(IllegalArgumentException("Invalid password"))
+                authResult.onSuccess { user ->
+                    sessionManager.saveUserId(user.id)
                 }
 
-                sessionManager.saveUserId(user.id)
-                Result.success(user)
+                return@withContext authResult
             } catch (e: Exception) {
                 Result.failure(e)
             }
