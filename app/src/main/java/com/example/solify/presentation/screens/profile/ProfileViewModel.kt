@@ -40,11 +40,21 @@ class ProfileViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             userFlow.collect { user ->
-                _uiState.update {
-                    it.copy(
-                        user = user,
-                        isLoading = false
-                    )
+                if (user == null && _uiState.value.user != null) {
+                    _uiState.update {
+                        it.copy(
+                            user = null,
+                            isLoading = false,
+                            isLoggedOut = true
+                        )
+                    }
+                } else {
+                    _uiState.update {
+                        it.copy(
+                            user = user,
+                            isLoading = false
+                        )
+                    }
                 }
             }
         }

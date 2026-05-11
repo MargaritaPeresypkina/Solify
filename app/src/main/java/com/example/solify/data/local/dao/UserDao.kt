@@ -15,7 +15,7 @@ interface UserDao {
     suspend fun getUserByEmail(email: String): UserDbModel?
 
     @Query("SELECT * FROM users WHERE id = :userId")
-    fun getUserById(userId: String): Flow<UserDbModel>
+    fun getUserById(userId: String): Flow<UserDbModel?>
 
     @Query("SELECT * FROM users WHERE id = :userId")
     suspend fun getUserByIdSuspend(userId: String): UserDbModel?

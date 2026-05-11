@@ -1,10 +1,12 @@
 package com.example.solify.data.local.data_sources
 
+import android.util.Log
 import com.example.solify.data.local.dao.UserDao
 import com.example.solify.data.local.mappers.toDbModel
 import com.example.solify.data.local.mappers.toDomain
 import com.example.solify.domain.entities.user.User
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -17,10 +19,13 @@ class UserLocalDataSource @Inject constructor(
     fun observeUserById(userId: String): Flow<User?> {
         return userDao.getUserById(userId).map { userDb ->
             try {
-                userDb.toDomain()
+                userDb?.toDomain()
             } catch (e: Exception) {
-                throw DataSourceException.MappingError("Failed to map user $userId", e)
+                null
             }
+        }.catch { exception ->
+            Log.e("UserLocalDataSource", "Error observing user", exception)
+            emit(null)
         }
     }
 
