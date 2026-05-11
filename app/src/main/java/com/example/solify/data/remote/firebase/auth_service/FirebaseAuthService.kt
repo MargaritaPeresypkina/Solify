@@ -31,6 +31,51 @@ class FirebaseAuthService @Inject constructor(
         }
     }
 
+    suspend fun updateUserEmail(email: String): Result<Unit> {
+        return try {
+            val currentUser = firebaseAuth.currentUser
+                ?: return Result.failure(Exception("No user logged in"))
+
+            val normalizedEmail = email.trim().lowercase()
+
+            val signInMethods = firebaseAuth.fetchSignInMethodsForEmail(normalizedEmail).await()
+            if (signInMethods.signInMethods?.isNotEmpty() == true) {
+                if (currentUser.email?.lowercase() != normalizedEmail) {
+                    return Result.failure(IllegalArgumentException("Email already in use"))
+                }
+            }
+
+            currentUser.updateEmail(normalizedEmail).await()
+
+            Result.success(Unit)
+        } catch (e: FirebaseAuthException) {
+            Result.failure(mapFirebaseAuthError(e))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun reauthenticateUser(password: String): Result<Unit> {
+        return try {
+            val currentUser = firebaseAuth.currentUser
+                ?: return Result.failure(Exception("No user logged in"))
+
+            val email = currentUser.email
+                ?: return Result.failure(Exception("User email not found"))
+
+            val credential = EmailAuthProvider.getCredential(email, password)
+            currentUser.reauthenticate(credential).await()
+
+            Log.d("Auth", "User reauthenticated successfully")
+            Result.success(Unit)
+        } catch (e: FirebaseAuthException) {
+            Log.e("Auth", "Reauthentication failed: ${e.errorCode}")
+            Result.failure(mapFirebaseAuthError(e))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun loginUser(email: String, password: String): Result<FirebaseUser> {
         return try {
             val result = firebaseAuth.signInWithEmailAndPassword(email, password).await()

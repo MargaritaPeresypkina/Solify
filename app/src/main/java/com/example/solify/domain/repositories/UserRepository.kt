@@ -10,10 +10,9 @@ interface UserRepository {
 
     fun observeUserById(userId: String): Flow<User?>
 
-    suspend fun updateUser(userId: String, name: String, surname: String, email: String): Result<User>
+    suspend fun updateUser(userId: String, name: String, surname: String, email: String, password: String? = null): Result<User>
 
-    suspend fun isEmailExists(email: String): Result<Boolean>
-
+    suspend fun isEmailExists(email: String, excludeUserId: String? = null): Result<Boolean>
     suspend fun registerUser(email: String, password: String, name: String, surname: String): Result<User>
 
     suspend fun loginUser(email: String, password: String): Result<User>

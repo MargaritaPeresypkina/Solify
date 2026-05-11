@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.solify.domain.entities.user.User
 import com.example.solify.domain.usecases.auth.DeleteAccountUseCase
+import com.example.solify.domain.usecases.user.CheckEmailAvailabilityUseCase
 import com.example.solify.domain.usecases.user.DeleteUserAvatarUseCase
 import com.example.solify.domain.usecases.user.GetCurrentUserUseCase
 import com.example.solify.domain.usecases.user.UpdateUserAvatarUseCase
@@ -25,7 +26,8 @@ class EditProfileViewModel @Inject constructor(
     private val updateUserProfileUseCase: UpdateUserProfileUseCase,
     private val updateUserAvatarUseCase: UpdateUserAvatarUseCase,
     private val deleteAccountUseCase: DeleteAccountUseCase,
-    private val deleteUserAvatarUseCase: DeleteUserAvatarUseCase
+    private val deleteUserAvatarUseCase: DeleteUserAvatarUseCase,
+    private val checkEmailAvailabilityUseCase: CheckEmailAvailabilityUseCase
 
 ) : ViewModel() {
 
@@ -73,6 +75,11 @@ class EditProfileViewModel @Inject constructor(
             is EditProfileCommand.OnDismissDeleteDialog -> dismissDeleteDialog()
             is EditProfileCommand.OnResetError -> resetError()
             is EditProfileCommand.OnUpdateDeletePassword -> updateDeletePassword(command.password)
+
+            is EditProfileCommand.OnShowPasswordDialog -> showPasswordDialog()
+            is EditProfileCommand.OnDismissPasswordDialog -> dismissPasswordDialog()
+            is EditProfileCommand.OnUpdatePendingPassword -> updatePendingPassword(command.password)
+            is EditProfileCommand.OnConfirmPassword -> confirmPassword(command.password)
         }
     }
 
@@ -127,14 +134,41 @@ class EditProfileViewModel @Inject constructor(
             return
         }
 
+        if (originalUser?.email == currentState.email) {
+            performUpdate(currentState.name, currentState.surname, currentState.email, null)
+            return
+        }
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null) }
+
+            val isEmailAvailable = try {
+                checkEmailAvailabilityUseCase(currentState.email).getOrNull() ?: false
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        error = "Failed to check email availability"
+                    )
+                }
+                return@launch
+            }
+
+            _uiState.update { it.copy(isLoading = false) }
+
+            if (isEmailAvailable) {
+                _uiState.update { it.copy(showPasswordDialog = true) }
+            } else {
+                _uiState.update { it.copy(emailError = "Email already in use") }
+            }
+        }
+    }
+
+    private fun performUpdate(name: String, surname: String, email: String, password: String?) {
         viewModelScope.launch(Dispatchers.IO) {
             _uiState.update { it.copy(isLoading = true, error = null) }
 
-            val result = updateUserProfileUseCase(
-                name = currentState.name,
-                surname = currentState.surname,
-                email = currentState.email
-            )
+            val result = updateUserProfileUseCase(name, surname, email, password)
 
             withContext(Dispatchers.Main) {
                 result.onSuccess { updatedUser ->
@@ -142,20 +176,70 @@ class EditProfileViewModel @Inject constructor(
                         it.copy(
                             isLoading = false,
                             onNavigateBack = true,
-                            updatedUser = updatedUser
+                            updatedUser = updatedUser,
+                            showPasswordDialog = false,
+                            pendingPassword = ""
                         )
                     }
                 }.onFailure { error ->
-                    _uiState.update {
-                        it.copy(
-                            isLoading = false,
-                            error = error.message ?: "Failed to update profile"
-                        )
+                    val errorMessage = error.message ?: "Failed to update profile"
+                    val isPasswordError = errorMessage.contains("password", ignoreCase = true) ||
+                            errorMessage.contains("recent authentication", ignoreCase = true)
+
+                    if (isPasswordError && _uiState.value.showPasswordDialog) {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                pendingPasswordError = "Invalid password. Please try again."
+                            )
+                        }
+                    } else {
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                error = errorMessage,
+                                showPasswordDialog = false
+                            )
+                        }
                     }
                 }
             }
         }
     }
+
+    private fun showPasswordDialog() {
+        _uiState.update {
+            it.copy(
+                showPasswordDialog = true,
+                pendingPassword = "",
+                pendingPasswordError = null
+            )
+        }
+    }
+
+    private fun dismissPasswordDialog() {
+        _uiState.update {
+            it.copy(
+                showPasswordDialog = false,
+                pendingPassword = "",
+                pendingPasswordError = null
+            )
+        }
+    }
+
+    private fun updatePendingPassword(password: String) {
+        _uiState.update { it.copy(pendingPassword = password, pendingPasswordError = null) }
+    }
+
+    private fun confirmPassword(password: String) {
+        if (password.isBlank()) {
+            _uiState.update { it.copy(pendingPasswordError = "Password is required") }
+            return
+        }
+        val currentState = _uiState.value
+        performUpdate(currentState.name, currentState.surname, currentState.email, password)
+    }
+
 
     private fun uploadAvatar(imageUri: String) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -302,7 +386,11 @@ data class EditProfileUiState(
     // Delete account dialog
     val showDeleteAccountDialog: Boolean = false,
     val deletePassword: String = "",
-    val deletePasswordError: String? = null
+    val deletePasswordError: String? = null,
+
+    val showPasswordDialog: Boolean = false,
+    val pendingPassword: String = "",
+    val pendingPasswordError: String? = null
 )
 
 sealed class EditProfileCommand {
@@ -317,4 +405,9 @@ sealed class EditProfileCommand {
     object OnDismissDeleteDialog : EditProfileCommand()
     object OnResetError : EditProfileCommand()
     data class OnUpdateDeletePassword(val password: String) : EditProfileCommand()
+
+    object OnShowPasswordDialog : EditProfileCommand()
+    object OnDismissPasswordDialog : EditProfileCommand()
+    data class OnUpdatePendingPassword(val password: String) : EditProfileCommand()
+    data class OnConfirmPassword(val password: String) : EditProfileCommand()
 }

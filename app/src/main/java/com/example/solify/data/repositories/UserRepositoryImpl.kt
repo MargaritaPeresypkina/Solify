@@ -62,16 +62,37 @@ class UserRepositoryImpl @Inject constructor(
         userId: String,
         name: String,
         surname: String,
-        email: String
+        email: String,
+        password: String?
     ): Result<User> {
         return withContext(Dispatchers.IO) {
             try {
                 val currentUser = localDataSource.getUserById(userId)
+                val normalizedEmail = email.trim().lowercase()
+                val currentEmail = currentUser.email.lowercase()
 
-                if (email != currentUser.email) {
-                    val emailExists = userRemoteDataSource.isEmailExists(email)
-                    if (emailExists) {
-                        return@withContext Result.failure(IllegalArgumentException("Email already in use"))
+                // Если email изменился
+                if (normalizedEmail != currentEmail) {
+                    if (password.isNullOrBlank()) {
+                        return@withContext Result.failure(
+                            IllegalArgumentException("Password required to change email")
+                        )
+                    }
+
+                    // reauthentication
+                    val reauthResult = remoteAuthService.reauthenticateUser(password)
+                    if (reauthResult.isFailure) {
+                        return@withContext Result.failure(
+                            Exception("Invalid password. Please try again.")
+                        )
+                    }
+
+                    // обновление email в Auth
+                    val authResult = remoteAuthService.updateUserEmail(normalizedEmail)
+                    if (authResult.isFailure) {
+                        return@withContext Result.failure(
+                            Exception("Failed to update email: ${authResult.exceptionOrNull()?.message}")
+                        )
                     }
                 }
 
@@ -79,7 +100,7 @@ class UserRepositoryImpl @Inject constructor(
                     id = userId,
                     name = name,
                     surname = surname,
-                    email = email,
+                    email = normalizedEmail,
                     avatarUrl = currentUser.avatarUrl,
                     passwordHash = currentUser.passwordHash
                 )
@@ -133,12 +154,10 @@ class UserRepositoryImpl @Inject constructor(
         }
     }
 
-
-
-    override suspend fun isEmailExists(email: String): Result<Boolean> {
+    override suspend fun isEmailExists(email: String, excludeUserId: String?): Result<Boolean> {
         return withContext(Dispatchers.IO) {
             try {
-                Result.success(userRemoteDataSource.isEmailExists(email))
+                Result.success(userRemoteDataSource.isEmailExists(email,excludeUserId))
             } catch (e: Exception) {
                 Result.failure(Exception("Failed to check email: ${e.message}", e))
             }
@@ -153,14 +172,6 @@ class UserRepositoryImpl @Inject constructor(
     ): Result<User> {
         return withContext(Dispatchers.IO) {
             try {
-                if (userRemoteDataSource.isEmailExists(email)) {
-                    return@withContext Result.failure(IllegalArgumentException("Email already registered"))
-                }
-
-                if (password.length < 6) {
-                    return@withContext Result.failure(IllegalArgumentException("Password must be at least 6 characters"))
-                }
-
                 val authResult = remoteAuthService.registerUser(email, password)
 
                 authResult.onSuccess { firebaseUser ->

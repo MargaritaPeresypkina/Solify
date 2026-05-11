@@ -17,6 +17,14 @@ class RegisterUserUseCase @Inject constructor(
         email: String,
         password: String
     ): Result<User> {
+        val isEmailExists = userRepository.isEmailExists(email).getOrThrow()
+        if (isEmailExists) {
+            return Result.failure(IllegalArgumentException("Email already registered"))
+        }
+        if (password.length < 6) {
+            return Result.failure(IllegalArgumentException("Password must be at least 6 characters"))
+        }
+
         val result = userRepository.registerUser(email, password, name, surname)
 
         result.onSuccess { user ->

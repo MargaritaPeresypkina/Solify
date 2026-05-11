@@ -137,7 +137,7 @@ fun EditProfileScreen(
                     ) {
                         Icon(
                             painter = painterResource(R.drawable.cross),
-                            contentDescription = "Close",
+                            contentDescription = stringResource(R.string.close),
                             modifier = Modifier
                                 .size(12.dp)
                                 .clickable {
@@ -192,14 +192,14 @@ fun EditProfileScreen(
                                 if (!uiState.avatarUrl.isNullOrEmpty()) {
                                     AsyncImage(
                                         model = uiState.avatarUrl,
-                                        contentDescription = "Avatar",
+                                        contentDescription = stringResource(R.string.avatar_image),
                                         modifier = Modifier.fillMaxSize(),
                                         contentScale = ContentScale.Crop
                                     )
                                 } else {
                                     Icon(
                                         imageVector = Icons.Outlined.PersonOutline,
-                                        contentDescription = "Avatar",
+                                        contentDescription = stringResource(R.string.avatar_icon),
                                         modifier = Modifier.size(47.dp),
                                         tint = MaterialTheme.colorScheme.onPrimary
                                     )
@@ -217,7 +217,7 @@ fun EditProfileScreen(
                                 ) {
                                     Icon(
                                         painter = painterResource(R.drawable.delete),
-                                        contentDescription = "Delete",
+                                        contentDescription = stringResource(R.string.delete),
                                         tint = MaterialTheme.colorScheme.primary,
                                         modifier = Modifier.size(13.dp)
                                     )
@@ -234,7 +234,7 @@ fun EditProfileScreen(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Text(
-                                text = "Upload Photo",
+                                text = stringResource(R.string.upload_photo),
                                 color = MaterialTheme.colorScheme.onSecondary,
                                 style = MaterialTheme.typography.titleMedium,
                                 modifier = Modifier.clickable {
@@ -248,7 +248,7 @@ fun EditProfileScreen(
                         CustomTextField(
                             value = uiState.name,
                             onValueChange = onNameChange,
-                            placeholder = "Name",
+                            placeholder = stringResource(R.string.name),
                             isError = uiState.nameError != null
                         )
 
@@ -272,7 +272,7 @@ fun EditProfileScreen(
                         CustomTextField(
                             value = uiState.surname,
                             onValueChange = onSurnameChange,
-                            placeholder = "Surname",
+                            placeholder = stringResource(R.string.surname),
                             isError = uiState.surnameError != null
                         )
 
@@ -296,7 +296,7 @@ fun EditProfileScreen(
                         CustomTextField(
                             value = uiState.email,
                             onValueChange = onEmailChange,
-                            placeholder = "Email",
+                            placeholder = stringResource(R.string.email),
                             isError = uiState.emailError != null
                         )
 
@@ -321,7 +321,7 @@ fun EditProfileScreen(
                             horizontalArrangement = Arrangement.End
                         ) {
                             Text(
-                                text = "Delete account?",
+                                text = stringResource(R.string.delete_account),
                                 color = Red100,
                                 style = MaterialTheme.typography.displaySmall,
                                 modifier = Modifier.clickable {
@@ -344,6 +344,79 @@ fun EditProfileScreen(
                     onDismiss = {
                         viewModel.processCommand(EditProfileCommand.OnDismissDeleteDialog)
                     }
+                )
+            }
+            if (uiState.showPasswordDialog) {
+                AlertDialog(
+                    onDismissRequest = {
+                        viewModel.processCommand(EditProfileCommand.OnDismissPasswordDialog)
+                    },
+                    title = {
+                        Text(
+                            text = stringResource(R.string.confirm_password),
+                            color = MaterialTheme.colorScheme.onSecondary,
+                            style = MaterialTheme.typography.titleLarge,
+                        )
+                    },
+                    text = {
+                        Column {
+                            Text(
+                                text = stringResource(R.string.enter_your_password_to_change_email_address),
+                                style = MaterialTheme.typography.bodyMedium,
+                                modifier = Modifier.padding(bottom = 16.dp),
+                                color = MaterialTheme.colorScheme.onSecondary
+                            )
+                            CustomTextField(
+                                value = uiState.pendingPassword,
+                                onValueChange = {
+                                    viewModel.processCommand(EditProfileCommand.OnUpdatePendingPassword(it))
+                                },
+                                placeholder = stringResource(R.string.enter_your_password),
+                                isError = uiState.pendingPasswordError != null,
+                                isPassword = true,
+                                supportingText = {
+                                    if (uiState.pendingPasswordError != null) {
+                                        Text(
+                                            text = uiState.pendingPasswordError!!,
+                                            color = Red100,
+                                            style = MaterialTheme.typography.bodySmall
+                                        )
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    },
+                    confirmButton = {
+                        Button(
+                            onClick = {
+                                viewModel.processCommand(
+                                    EditProfileCommand.OnConfirmPassword(uiState.pendingPassword)
+                                )
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.onSecondary)
+                        ) {
+                            Text(
+                                stringResource(R.string.confirm),
+                                style = MaterialTheme.typography.displaySmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(
+                            onClick = {
+                                viewModel.processCommand(EditProfileCommand.OnDismissPasswordDialog)
+                            }
+                        ) {
+                            Text(
+                                stringResource(R.string.cancel),
+                                color = MaterialTheme.colorScheme.onSecondary,
+                                style = MaterialTheme.typography.displaySmall
+                            )
+                        }
+                    },
+                    containerColor = MaterialTheme.colorScheme.primary
                 )
             }
         }
@@ -418,3 +491,4 @@ fun DeleteAccountDialog(
         containerColor = MaterialTheme.colorScheme.primary
     )
 }
+

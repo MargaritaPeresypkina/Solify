@@ -12,12 +12,26 @@ class UpdateUserProfileUseCase @Inject constructor(
     suspend operator fun invoke(
         name: String,
         surname: String,
-        email: String
+        email: String,
+        password: String? = null
     ): Result<User> {
         return try {
             val userId = sessionManager.getCurrentUserId()
                 ?: return Result.failure(IllegalStateException("Not logged in"))
-            return userRepository.updateUser(userId, name, surname, email)
+
+            val currentUser = userRepository.getUserById(userId).getOrNull()
+            if (currentUser?.email != email) {
+                val isEmailExists = userRepository.isEmailExists(
+                    email = email,
+                    excludeUserId = userId
+                ).getOrThrow()
+
+                if (isEmailExists) {
+                    return Result.failure(IllegalArgumentException("Email address already exists."))
+                }
+            }
+
+            userRepository.updateUser(userId, name, surname, email, password)
         } catch (e: Exception) {
             Result.failure(Exception("Profile update failed: ${e.message}"))
         }
