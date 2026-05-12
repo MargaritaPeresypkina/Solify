@@ -1,6 +1,7 @@
 package com.example.solify.data.local.data_sources
 
 import com.example.solify.data.local.dao.LessonDao
+import com.example.solify.data.local.db_models.LessonDbModel
 import com.example.solify.data.local.mappers.toDomain
 import com.example.solify.data.local.mappers.toLessonsDomain
 import com.example.solify.domain.entities.lesson.Lesson
@@ -80,6 +81,14 @@ class LessonLocalDataSource @Inject constructor(
                 ?: throw DomainException.NotFound("Hint not found for question: $questionId")
         } catch (e: Exception) {
             throw DataSourceException.DatabaseError("Failed to get hint for $questionId", e)
+        }
+    }
+
+    suspend fun insertLesson(lesson: LessonDbModel) {
+        try {
+            lessonDao.insertLesson(lesson)
+        } catch (e: Exception) {
+            throw DataSourceException.DatabaseError("Failed to insert lesson", e)
         }
     }
 

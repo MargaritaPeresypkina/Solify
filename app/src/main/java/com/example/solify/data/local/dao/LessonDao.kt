@@ -1,6 +1,8 @@
 package com.example.solify.data.local.dao
 
 import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import com.example.solify.data.local.db_models.LessonDbModel
@@ -14,7 +16,7 @@ import kotlinx.coroutines.flow.Flow
 interface LessonDao {
 
     // Lessons
-    @Query("SELECT * FROM lessons")
+    @Query("SELECT * FROM lessons ORDER BY level ASC, `order` ASC")
     fun getAllLessons(): Flow<List<LessonDbModel>>
 
     @Transaction
@@ -43,4 +45,7 @@ interface LessonDao {
     // Для GetHintUseCase
     @Query("SELECT hint FROM questions WHERE id = :questionId")
     suspend fun getHint(questionId: String): String?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertLesson(lesson: LessonDbModel)
 }

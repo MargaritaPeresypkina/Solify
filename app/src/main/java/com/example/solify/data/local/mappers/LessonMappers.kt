@@ -130,7 +130,7 @@ fun List<LessonDbModel>.toLessonsDomain(): List<Lesson> {
             theoryItems = emptyList(),
             tests = emptyList()
         )
-    }
+    }.sortedBy { it.level.ordinal }
 }
 
 

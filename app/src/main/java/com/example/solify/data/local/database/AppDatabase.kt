@@ -41,7 +41,7 @@ import com.example.solify.data.local.db_models.UserProgressDbModel
         ExerciseDbModel::class,
         ExerciseAnswerOptionDbModel::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
