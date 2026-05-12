@@ -97,7 +97,7 @@ sealed class BottomNavItem(
         iconResId = R.drawable.training_icon_active,
     )
     object Main : BottomNavItem(
-        route = Screen.Main.route,
+        route = Screen.Lessons.route,
         title = "Main",
         iconResId = R.drawable.lesson_icon_active,
     )

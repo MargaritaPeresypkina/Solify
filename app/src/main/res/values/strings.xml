@@ -16,4 +16,8 @@
     <string name="avatar_image">Avatar image</string>
     <string name="avatar_icon">Avatar icon</string>
     <string name="close">Close</string>
+    <string name="user_avatar">User Avatar</string>
+    <string name="default_avatar">Default Avatar</string>
+    <string name="user_badge">User Badge</string>
+    <string name="go_to_lesson">Go to lesson</string>
 </resources>

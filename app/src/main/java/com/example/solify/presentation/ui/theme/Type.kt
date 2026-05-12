@@ -42,18 +42,12 @@ val Typography = Typography(
         fontSize = 12.sp,
         lineHeight = 15.sp
     ),
-//    bodyLarge = TextStyle(
-//        fontFamily = customFontFamily,
-//        fontWeight = FontWeight.Medium,
-//        fontSize = 20.sp,
-//        lineHeight = 15.sp
-//    ),
-//    bodyMedium = TextStyle(
-//        fontFamily = customFontFamily,
-//        fontWeight = FontWeight.Normal,
-//        fontSize = 16.sp,
-//        lineHeight = 20.sp
-//    ),
+    bodyLarge = TextStyle(
+        fontFamily = customFontFamily,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 14.sp,
+        lineHeight = 17.sp
+    ),
     bodySmall = TextStyle(
         fontFamily = customFontFamily,
         fontWeight = FontWeight.Normal,
@@ -65,6 +59,12 @@ val Typography = Typography(
         fontWeight = FontWeight.Medium,
         fontSize = 16.sp,
         lineHeight = 20.sp
+    ),
+    headlineSmall = TextStyle(
+        fontFamily = customFontFamily,
+        fontWeight = FontWeight.Light,
+        fontSize = 10.sp,
+        lineHeight = 12.sp
     )
 )
 

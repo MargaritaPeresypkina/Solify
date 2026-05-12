@@ -1,5 +1,6 @@
 package com.example.solify.presentation.navigation
 
+import android.os.Bundle
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.runtime.Composable
@@ -14,6 +15,7 @@ import com.example.solify.domain.usecases.auth.AuthState
 import com.example.solify.presentation.MainViewModel
 import com.example.solify.presentation.screens.auth_choice.AuthChoiceScreen
 import com.example.solify.presentation.screens.edit_profile.EditProfileScreen
+import com.example.solify.presentation.screens.lesson.LessonScreen
 import com.example.solify.presentation.screens.lessons.LessonsScreen
 import com.example.solify.presentation.screens.login.LoginScreen
 import com.example.solify.presentation.screens.profile.ProfileScreen
@@ -93,8 +95,25 @@ fun NavGraph(
             TrainingScreen(navController = navController)
         }
 
-        composable(Screen.Main.route) {
-            LessonsScreen(navController = navController)
+        composable(Screen.Lessons.route) {
+            LessonsScreen(
+                navController = navController,
+                onLessonClick = { lessonId ->
+                    navController.navigate(Screen.Lesson.createRoute(lessonId))
+                }
+            )
+        }
+
+        composable(
+            route = Screen.Lesson.route
+        ) {
+            val lessonId = Screen.Lesson.getLessonId(it.arguments)
+            LessonScreen(
+                lessonId = lessonId,
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
         }
 
         composable(Screen.EditProfile.route) {
@@ -118,8 +137,19 @@ sealed class Screen(val route: String) {
     data object Login : Screen("login")
     data object Register : Screen("register")
     data object Profile : Screen("profile")
-
     data object EditProfile : Screen("edit_profile")
+
     data object Training : Screen("training")
-    data object Main : Screen("main")
+    data object Lessons : Screen("lessons")
+
+    data object Lesson : Screen("lesson/{lesson_id}") {
+        fun createRoute(lessonId: String): String {
+            return "lesson/$lessonId"
+        }
+
+        fun getLessonId(arguments: Bundle?): String {
+            return arguments?.getString("lesson_id") ?: ""
+        }
+    }
+
 }

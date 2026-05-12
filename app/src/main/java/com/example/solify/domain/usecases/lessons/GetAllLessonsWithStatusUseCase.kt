@@ -15,9 +15,9 @@ class GetAllLessonsWithStatusUseCase @Inject constructor(
     private val progressRepository: ProgressRepository
 ) {
     operator fun invoke(userId: String): Flow<List<LessonWithStatus>> {
-        val lessonsFlow = lessonRepository.getAllLessons() //List(id title description level)
-        val userProgressFlow = progressRepository.getUserProgress(userId) //userId, completedLessons Set<String>
-        val lessonsProgressFlow = progressRepository.getAllLessonsProgress(userId) //List(lessonId completedTests Set<String>)
+        val lessonsFlow = lessonRepository.getAllLessons()
+        val userProgressFlow = progressRepository.getUserProgress(userId)
+        val lessonsProgressFlow = progressRepository.getAllLessonsProgress(userId)
 
         return combine(lessonsFlow, userProgressFlow, lessonsProgressFlow)
         { lessons, userProgress, lessonsProgress ->
@@ -35,9 +35,10 @@ class GetAllLessonsWithStatusUseCase @Inject constructor(
                     title = lesson.title,
                     description = lesson.description,
                     level = lesson.level,
-                    status = status
+                    status = status,
+                    order = lesson.order
                 )
-            }
+            }.sortedWith(compareBy({ it.level.ordinal }, { it.order }))
         }
     }
 
@@ -59,5 +60,6 @@ data class LessonWithStatus(
     val title: String,
     val description: String,
     val level: Level,
-    val status: Status
+    val status: Status,
+    val order: Int = 0
 )
