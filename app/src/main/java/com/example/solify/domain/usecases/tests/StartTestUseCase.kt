@@ -16,7 +16,7 @@ class StartTestUseCase @Inject constructor(
         testId: String
     ): Result<Boolean> {
         return try {
-            val existingProgress = progressRepository.getTestProgress(userId, lessonId, testId).value()
+            val existingProgress = progressRepository.getTestProgress(userId, testId).value()
 
             if (existingProgress != null) {
                 return Result.success(false)
@@ -30,7 +30,7 @@ class StartTestUseCase @Inject constructor(
                 completedQuestions = emptySet(),
                 pendingQuestions = test.questionsIds.toMutableList()
             )
-            progressRepository.saveTestProgress(userId, lessonId, testId, initialProgress)
+            progressRepository.saveTestProgress(userId, initialProgress)
 
             Result.success(true)
         } catch (e: Exception) {

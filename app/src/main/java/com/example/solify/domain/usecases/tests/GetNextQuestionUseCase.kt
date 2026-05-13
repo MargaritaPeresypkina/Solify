@@ -16,7 +16,7 @@ class GetNextQuestionUseCase @Inject constructor(
         testId: String
     ): Result<Question?> {
         return try {
-            val progress = progressRepository.getTestProgress(userId, lessonId, testId).value()
+            val progress = progressRepository.getTestProgress(userId, testId).value()
                 ?: return Result.failure(IllegalStateException("Test not started. Call StartTestUseCase first."))
 
             val pendingQuestions = progress.pendingQuestions

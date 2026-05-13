@@ -5,7 +5,6 @@ import com.example.solify.data.local.db_models.LessonProgressDbModel
 import com.example.solify.data.local.db_models.TestProgressDbModel
 import com.example.solify.data.local.db_models.UserProgressDbModel
 import com.example.solify.data.local.mappers.toDomain
-import com.example.solify.data.local.mappers.toLessonsDomain
 import com.example.solify.domain.entities.progress.LessonProgress
 import com.example.solify.domain.entities.progress.TestProgress
 import com.example.solify.domain.entities.progress.UserProgress
@@ -34,7 +33,7 @@ class ProgressLocalDataSource @Inject constructor(
         try {
             val dbModel = UserProgressDbModel(
                 userId = progress.userId,
-                completedLessons = progress.completedLessons.joinToString(",")
+                completedLessons = progress.completedLessons.toList()
             )
             progressDao.insertOrUpdateUserProgress(dbModel)
         } catch (e: Exception) {
@@ -63,19 +62,7 @@ class ProgressLocalDataSource @Inject constructor(
             }
         }
     
-    suspend fun insertOrUpdateLessonProgress(userId: String, progress: LessonProgress) {
-        try {
-            val dbModel = LessonProgressDbModel(
-                userId = userId,
-                lessonId = progress.lessonId,
-                completedTests = progress.completedTests.joinToString(",")
-            )
-            progressDao.insertOrUpdateLessonProgress(dbModel)
-        } catch (e: Exception) {
-            throw DataSourceException.DatabaseError("Failed to insert lesson progress", e)
-        }
-    }
-    
+
     suspend fun resetLessonProgress(userId: String, lessonId: String) {
         try {
             progressDao.resetLessonProgress(userId, lessonId)
@@ -86,17 +73,17 @@ class ProgressLocalDataSource @Inject constructor(
 
     
     // Test Progress
-    fun getTestProgress(userId: String, lessonId: String, testId: String): Flow<TestProgress?> =
-        progressDao.getTestProgress(userId, lessonId, testId).map { progress ->
+    fun getTestProgress(userId: String, testId: String): Flow<TestProgress?> =
+        progressDao.getTestProgress(userId, testId).map { progress ->
             try {
                 progress?.toDomain()
             } catch (e: Exception) {
                 throw DataSourceException.MappingError("Failed to map test progress", e)
             }
         }
-    
-    fun getAllTestsProgress(userId: String, lessonId: String): Flow<List<TestProgress>> =
-        progressDao.getAllTestsProgress(userId, lessonId).map { testsProgressDb ->
+
+    fun getAllTestsProgress(userId: String): Flow<List<TestProgress>> =
+        progressDao.getAllTestsProgress(userId).map { testsProgressDb ->
             testsProgressDb.map { progress ->
                 try {
                     progress.toDomain()
@@ -105,30 +92,43 @@ class ProgressLocalDataSource @Inject constructor(
                 }
             }
         }
-    
+
+    suspend fun insertOrUpdateLessonProgress(userId: String, progress: LessonProgress) {
+        try {
+            val dbModel = LessonProgressDbModel(
+                userId = userId,
+                lessonId = progress.lessonId,
+                completedTests = progress.completedTests.toList(),
+                pendingTests = progress.pendingTests.toList()
+            )
+            progressDao.insertOrUpdateLessonProgress(dbModel)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            throw DataSourceException.DatabaseError("Failed to insert lesson progress: ${e.message}", e)
+        }
+    }
+
     suspend fun insertOrUpdateTestProgress(
         userId: String,
-        lessonId: String,
         testId: String,
         progress: TestProgress
     ) {
         try {
             val dbModel = TestProgressDbModel(
                 userId = userId,
-                lessonId = lessonId,
                 testId = testId,
-                completedQuestions = progress.completedQuestions.joinToString(","),
-                pendingQuestions = progress.pendingQuestions.joinToString(",")
+                completedQuestions = progress.completedQuestions.toList(),
+                pendingQuestions = progress.pendingQuestions
             )
             progressDao.insertOrUpdateTestProgress(dbModel)
         } catch (e: Exception) {
             throw DataSourceException.DatabaseError("Failed to insert test progress", e)
         }
     }
-    
-    suspend fun resetTestProgress(userId: String, lessonId: String, testId: String) {
+
+    suspend fun resetTestProgress(userId: String, testId: String) {
         try {
-            progressDao.resetTestProgress(userId, lessonId, testId)
+            progressDao.resetTestProgress(userId, testId)
         } catch (e: Exception) {
             throw DataSourceException.DatabaseError("Failed to reset test progress", e)
         }

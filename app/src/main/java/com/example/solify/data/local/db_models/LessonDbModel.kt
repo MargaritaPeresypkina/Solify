@@ -10,5 +10,5 @@ data class LessonDbModel(
     val title: String,
     val description: String,
     val level: String, // BEGINNER, INTERMEDIATE, ADVANCED
-    val order: Int = 0
+    val order: Int
 )

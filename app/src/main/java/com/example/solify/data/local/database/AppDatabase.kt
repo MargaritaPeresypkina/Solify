@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
 import com.example.solify.data.local.dao.LessonDao
 import com.example.solify.data.local.dao.ProgressDao
 import com.example.solify.data.local.dao.TrainingDao
@@ -41,9 +42,10 @@ import com.example.solify.data.local.db_models.UserProgressDbModel
         ExerciseDbModel::class,
         ExerciseAnswerOptionDbModel::class
     ],
-    version = 3,
+    version = 9,
     exportSchema = false
 )
+@TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao
     abstract fun lessonDao(): LessonDao

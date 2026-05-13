@@ -161,8 +161,8 @@ fun ProfileScreen(
                             horizontalArrangement = Arrangement.Start
                         ) {
                             Image(
-                                painter = painterResource(R.drawable.none_medal),
-                                contentDescription = "none_medal",
+                                painter = painterResource(uiState.userBadgeRes),
+                                contentDescription = "user_badge",
                                 modifier = modifier.height(32.dp)
                             )
                         }

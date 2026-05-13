@@ -14,7 +14,7 @@ class GetAllTestsProgressUseCase @Inject constructor(
         userId: String,
         lessonId: String
     ): Flow<Result<List<TestProgress>>> {
-        return progressRepository.getAllTestsProgress(userId, lessonId)
+        return progressRepository.getAllTestsProgress(userId)
             .map { testsProgress ->
                 Result.success(testsProgress)
             }

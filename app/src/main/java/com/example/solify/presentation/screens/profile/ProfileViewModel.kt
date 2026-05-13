@@ -24,7 +24,8 @@ import javax.inject.Inject
 class ProfileViewModel @Inject constructor(
     observeCurrentUserUseCase: ObserveCurrentUserUseCase,
     private val logoutUserUseCase: LogoutUserUseCase,
-    private val updateUserAvatarUseCase: UpdateUserAvatarUseCase
+    private val updateUserAvatarUseCase: UpdateUserAvatarUseCase,
+    private val getUserBadgeUseCase: GetUserBadgeUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileUiState(isLoading = true))

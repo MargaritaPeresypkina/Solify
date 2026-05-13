@@ -1,5 +1,6 @@
 package com.example.solify.data.repositories
 
+import android.util.Log
 import com.example.solify.data.local.data_sources.LessonLocalDataSource
 import com.example.solify.data.local.db_models.LessonDbModel
 import com.example.solify.data.remote.firebase.data_source.LessonRemoteDataSource
@@ -23,8 +24,10 @@ class LessonRepositoryImpl @Inject constructor(
         return flow {
             val cachedLessons = localDataSource.getAllLessons()
             emit(cachedLessons.first())
+            Log.d("LessonsDebug", "cachedLessons ${cachedLessons.first()}")
 
             val freshLessons = remoteDataSource.getAllLessons().getOrNull()
+            Log.d("LessonsDebug", "freshLessons $freshLessons")
             if (freshLessons != null) {
 
                 freshLessons.forEach { lesson ->

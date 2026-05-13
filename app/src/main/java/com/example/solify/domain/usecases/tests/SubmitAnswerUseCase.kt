@@ -23,7 +23,7 @@ class SubmitAnswerUseCase @Inject constructor(
 
             val isCorrect = question.correctOptionId == selectedOptionId
 
-            val currentProgress = progressRepository.getTestProgress(userId, lessonId, testId).value()
+            val currentProgress = progressRepository.getTestProgress(userId, testId).value()
                 ?: return Result.failure(IllegalStateException("Test not started"))
 
             val updatedProgress = if (isCorrect) {
@@ -48,11 +48,11 @@ class SubmitAnswerUseCase @Inject constructor(
 
             val isTestCompleted = updatedProgress.completedQuestions.size == test.questionsIds.size
             if (isTestCompleted) {
-                progressRepository.clearTestProgress(userId, lessonId, testId)
-                progressRepository.markTestAsCompleted(userId, lessonId, testId)
+                progressRepository.clearTestProgress(userId, testId)
+//                progressRepository.markTestAsCompleted(userId, lessonId, testId)
                 checkAndMarkLessonCompleted(userId, lessonId)
             } else {
-                progressRepository.saveTestProgress(userId, lessonId, testId, updatedProgress)
+                progressRepository.saveTestProgress(userId, updatedProgress)
             }
 
             Result.success(
@@ -70,17 +70,17 @@ class SubmitAnswerUseCase @Inject constructor(
     }
 
     private suspend fun checkAndMarkLessonCompleted(userId: String, lessonId: String) {
-        val testsProgress = progressRepository.getAllTestsProgress(userId, lessonId).value() ?: return
+        val testsProgress = progressRepository.getAllTestsProgress(userId).value() ?: return
         val lessonProgress = progressRepository.getLessonProgress(userId, lessonId).value()
         val alreadyCompleted = lessonProgress?.completedTests ?: emptySet()
 
-        val allTestsCompleted = testsProgress.all { testProgress ->
-            alreadyCompleted.contains(testProgress.testId) || testProgress.completedQuestions.isNotEmpty()
-        }
+//        val allTestsCompleted = testsProgress.all { testProgress ->
+//            alreadyCompleted.contains(testProgress.testId) || testProgress.completedQuestions.isNotEmpty()
+//        }
 
-        if (allTestsCompleted && testsProgress.isNotEmpty()) {
-            progressRepository.markLessonAsCompleted(userId, lessonId)
-        }
+//        if (allTestsCompleted && testsProgress.isNotEmpty()) {
+//            progressRepository.markLessonAsCompleted(userId, lessonId)
+//        }
     }
 }
 
