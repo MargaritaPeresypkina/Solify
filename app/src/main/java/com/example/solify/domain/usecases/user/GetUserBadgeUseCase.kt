@@ -10,15 +10,17 @@ class GetUserBadgeUseCase @Inject constructor(
 ) {
     suspend operator fun invoke(userId: String): BadgeResult {
         return try {
-            val userProgress = progressRepository.getUserProgress(userId).first()
-            val completedCount = userProgress?.completedLessons?.size ?: 0
+            val completedCount = progressRepository.getAllLessonsProgress(userId).first()
+                .count { lessonProgress ->
+                    lessonProgress.pendingTests.size == 1 && lessonProgress.pendingTests[0] == ""
+                }
 
             when {
                 completedCount >= 10 -> BadgeResult(
                     badgeRes = R.drawable.gold_medal__1_,
-                    levelName = "Intermediate"
+                    levelName = "Advanced"
                 )
-                completedCount >= 5 -> BadgeResult(
+                completedCount >= 2 -> BadgeResult(
                     badgeRes = R.drawable.silver_medal,
                     levelName = "Intermediate"
                 )

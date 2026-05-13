@@ -24,10 +24,9 @@ fun TestProgress.toDbModel(
 ): TestProgressDbModel {
     return TestProgressDbModel(
         userId = userId,
-        lessonId = lessonId,
         testId = testId,
-        completedQuestions = completedQuestions.toCommaString(),
-        pendingQuestions = pendingQuestions.toCommaString()
+        completedQuestions = completedQuestions.toList(),
+        pendingQuestions = pendingQuestions
     )
 }
 
@@ -52,7 +51,8 @@ fun LessonProgress.toDbModel(
     return LessonProgressDbModel(
         userId = userId,
         lessonId = lessonId,
-        completedTests = completedTests.toCommaString()
+        completedTests = completedTests.toList(),
+        pendingTests = pendingTests.toList()
     )
 }
 
@@ -73,6 +73,6 @@ fun UserProgressDbModel.toDomain(
 fun UserProgress.toDbModel(): UserProgressDbModel {
     return UserProgressDbModel(
         userId = userId,
-        completedLessons = completedLessons.toCommaString()
+        completedLessons = completedLessons.toList()
     )
 }

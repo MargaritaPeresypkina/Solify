@@ -128,7 +128,8 @@ fun List<LessonDbModel>.toLessonsDomain(): List<Lesson> {
             description = lessonDbModel.description,
             level = Level.valueOf(lessonDbModel.level),
             theoryItems = emptyList(),
-            tests = emptyList()
+            tests = emptyList(),
+            order = lessonDbModel.order
         )
     }.sortedBy { it.level.ordinal }
 }

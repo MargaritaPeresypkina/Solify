@@ -1,11 +1,11 @@
 package com.example.solify.data.repositories
 
-import android.util.Log
 import com.example.solify.data.local.data_sources.ProgressLocalDataSource
 import com.example.solify.data.remote.firebase.data_source.ProgressRemoteDataSource
+import com.example.solify.data.remote.firebase.dto.LessonProgressDto
+import com.example.solify.data.remote.firebase.dto.TestProgressDto
 import com.example.solify.domain.entities.progress.LessonProgress
 import com.example.solify.domain.entities.progress.TestProgress
-import com.example.solify.domain.entities.progress.UserProgress
 import com.example.solify.domain.repositories.ProgressRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -19,117 +19,154 @@ class ProgressRepositoryImpl @Inject constructor(
     private val remoteDataSource: ProgressRemoteDataSource
 ) : ProgressRepository {
 
-    override fun getUserProgress(userId: String): Flow<UserProgress?> {
+    override fun getLessonProgress(userId: String, lessonId: String): Flow<LessonProgress?> {
         return flow {
-            val remoteProgress = remoteDataSource.getUserProgress(userId).getOrNull()
-            Log.d("LessonsDebug", "remoteProgress ${remoteProgress?.completedLessons}")
+            val cached = localDataSource.getLessonProgress(userId, lessonId).first()
+            if (cached != null) emit(cached)
 
-            if (remoteProgress != null) {
-                val userProgress = UserProgress(
-                    userId = userId,
-                    completedLessons = remoteProgress.completedLessons.toSet()
+            val remote = remoteDataSource.getLessonProgress(userId, lessonId).getOrNull()
+            if (remote != null) {
+                val progress = LessonProgress(
+                    lessonId = remote.lessonId,
+                    completedTests = remote.completedTests.toSet(),
+                    pendingTests = remote.pendingTests.toList()
                 )
-                localDataSource.insertOrUpdateUserProgress(userProgress)
-                emit(userProgress)
-            } else {
-                val localProgress = localDataSource.getUserProgress(userId).first()
-                if (localProgress != null) {
-                    emit(localProgress)
-                } else {
-                    val emptyProgress = UserProgress(
-                        userId = userId,
-                        completedLessons = emptySet()
-                    )
-                    emit(emptyProgress)
-                }
+                localDataSource.insertOrUpdateLessonProgress(userId, progress)
+                emit(progress)
             }
         }
     }
 
-    override fun getLessonProgress(userId: String, lessonId: String): Flow<LessonProgress?> {
-        return localDataSource.getLessonProgress(userId, lessonId)
-    }
-
     override fun getAllLessonsProgress(userId: String): Flow<List<LessonProgress>> {
-        return localDataSource.getAllLessonsProgress(userId)
+        return flow {
+            val remote = remoteDataSource.getAllLessonsProgress(userId).getOrNull() ?: emptyList()
+            val progresses = remote.map { dto ->
+                LessonProgress(
+                    lessonId = dto.lessonId,
+                    completedTests = dto.completedTests.toSet(),
+                    pendingTests = dto.pendingTests.toList()
+                )
+            }
+            if (progresses.isNotEmpty()) {
+                progresses.forEach { localDataSource.insertOrUpdateLessonProgress(userId, it) }
+            }
+            emit(progresses)
+        }
     }
 
-    override fun getTestProgress(
-        userId: String,
-        lessonId: String,
-        testId: String
-    ): Flow<TestProgress?> {
-        return localDataSource.getTestProgress(userId, lessonId, testId)
-    }
-
-    override fun getAllTestsProgress(
-        userId: String,
-        lessonId: String
-    ): Flow<List<TestProgress>> {
-        return localDataSource.getAllTestsProgress(userId, lessonId)
-    }
-
-    override suspend fun saveTestProgress(
-        userId: String,
-        lessonId: String,
-        testId: String,
-        progress: TestProgress
-    ) {
-        localDataSource.insertOrUpdateTestProgress(userId, lessonId, testId, progress)
-    }
-
-    override suspend fun saveLessonProgress(
-        userId: String,
-        lessonId: String,
-        progress: LessonProgress
-    ) {
+    override suspend fun saveLessonProgress(userId: String, progress: LessonProgress) {
+        val dto = LessonProgressDto(
+            lessonId = progress.lessonId,
+            completedTests = progress.completedTests.toList(),
+            pendingTests = progress.pendingTests.toList()
+        )
+        remoteDataSource.updateLessonProgress(userId, dto)
         localDataSource.insertOrUpdateLessonProgress(userId, progress)
     }
 
-    override suspend fun saveUserProgress(progress: UserProgress) {
-        remoteDataSource.updateUserProgress(
-            userId = progress.userId,
-            completedLessons = progress.completedLessons.toList()
-        )
-        localDataSource.insertOrUpdateUserProgress(progress)
-    }
-
-    override suspend fun clearTestProgress(
-        userId: String,
-        lessonId: String,
-        testId: String
-    ) {
-        localDataSource.resetTestProgress(userId, lessonId, testId)
-    }
-
-    override suspend fun clearLessonProgress(
-        userId: String,
-        lessonId: String
-    ) {
+    override suspend fun clearLessonProgress(userId: String, lessonId: String) {
         localDataSource.resetLessonProgress(userId, lessonId)
+        val emptyProgress = LessonProgressDto(lessonId = lessonId)
+        remoteDataSource.updateLessonProgress(userId, emptyProgress)
     }
 
-    override suspend fun markTestAsCompleted(
+    override fun getTestProgress(userId: String, testId: String): Flow<TestProgress?> {
+        return flow {
+            val cached = localDataSource.getTestProgress(userId, testId).first()
+            if (cached != null) emit(cached)
+
+            val remote = remoteDataSource.getTestProgress(userId, testId).getOrNull()
+            if (remote != null) {
+                val progress = TestProgress(
+                    testId = remote.testId,
+                    completedQuestions = remote.completedQuestions.toSet(),
+                    pendingQuestions = remote.pendingQuestions
+                )
+                localDataSource.insertOrUpdateTestProgress(userId, testId, progress)
+                emit(progress)
+            }
+        }
+    }
+
+    override fun getAllTestsProgress(userId: String): Flow<List<TestProgress>> {
+        return flow {
+            val remote = remoteDataSource.getAllTestsProgress(userId).getOrNull() ?: emptyList()
+            val progresses = remote.map { dto ->
+                TestProgress(
+                    testId = dto.testId,
+                    completedQuestions = dto.completedQuestions.toSet(),
+                    pendingQuestions = dto.pendingQuestions
+                )
+            }
+            progresses.forEach {
+                localDataSource.insertOrUpdateTestProgress(userId, it.testId, it)
+            }
+            emit(progresses)
+        }
+    }
+
+    override suspend fun saveTestProgress(userId: String, progress: TestProgress) {
+        val dto = TestProgressDto(
+            testId = progress.testId,
+            completedQuestions = progress.completedQuestions.toList(),
+            pendingQuestions = progress.pendingQuestions
+        )
+        remoteDataSource.updateTestProgress(userId, dto)
+        localDataSource.insertOrUpdateTestProgress(userId, progress.testId, progress)
+    }
+
+    override suspend fun clearTestProgress(userId: String, testId: String) {
+        localDataSource.resetTestProgress(userId, testId)
+        val emptyProgress = TestProgressDto(testId = testId)
+        remoteDataSource.updateTestProgress(userId, emptyProgress)
+    }
+
+    override suspend fun completeQuestion(
         userId: String,
         lessonId: String,
-        testId: String
+        testId: String,
+        questionId: String
     ) {
-        localDataSource.markTestAsCompleted(userId, lessonId, testId)
-    }
+        val testProgress = getTestProgress(userId, testId).first() ?: return
 
-    override suspend fun markLessonAsCompleted(
-        userId: String,
-        lessonId: String
-    ) {
-        val remoteProgress = remoteDataSource.getUserProgress(userId).getOrNull()
-        val completedLessons = remoteProgress?.completedLessons?.toMutableSet() ?: mutableSetOf()
-        completedLessons.add(lessonId)
+        val updatedCompleted = testProgress.completedQuestions.toMutableSet()
+        updatedCompleted.add(questionId)
 
-        val updatedProgress = UserProgress(
-            userId = userId,
-            completedLessons = completedLessons
+        val updatedPending = testProgress.pendingQuestions.toMutableList()
+        updatedPending.remove(questionId)
+
+        val updatedProgress = testProgress.copy(
+            completedQuestions = updatedCompleted,
+            pendingQuestions = updatedPending
         )
 
-        saveUserProgress(updatedProgress)
+        saveTestProgress(userId, updatedProgress)
+
+        if (updatedPending.isEmpty()) {
+            completeTest(userId, lessonId, testId)
+        }
+    }
+
+    override suspend fun completeTest(userId: String, lessonId: String, testId: String) {
+        val lessonProgress = getLessonProgress(userId, lessonId).first() ?: return
+
+        val updatedCompleted = lessonProgress.completedTests.toMutableSet()
+        updatedCompleted.add(testId)
+
+        val updatedPending = lessonProgress.pendingTests.toMutableSet()
+        val newPending = updatedPending.toMutableSet()
+        newPending.remove(testId)
+
+        val updatedProgress = lessonProgress.copy(
+            completedTests = updatedCompleted,
+            pendingTests = newPending.toList()
+        )
+
+        saveLessonProgress(userId, updatedProgress)
+    }
+
+    override suspend fun getNextPendingTest(userId: String, lessonId: String): String? {
+        val lessonProgress = getLessonProgress(userId, lessonId).first()
+        return lessonProgress?.pendingTests?.firstOrNull()
     }
 }

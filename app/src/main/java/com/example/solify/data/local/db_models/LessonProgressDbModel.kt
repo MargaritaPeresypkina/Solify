@@ -32,5 +32,6 @@ data class LessonProgressDbModel(
     val id: Long = 0,
     val userId: String,
     val lessonId: String,
-    val completedTests: String  // "testId1,testId2,testId3"
+    val completedTests: List<String>,  // "testId1,testId2,testId3"
+    val pendingTests: List<String>     // "testId5,testId6,testId4"
 )

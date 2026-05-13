@@ -22,18 +22,16 @@ import androidx.room.PrimaryKey
         )
     ],
     indices = [
-        Index(value = ["userId", "lessonId", "testId"], unique = true),
-        Index(value = ["userId", "lessonId"]),
-        Index(value = ["testId"]),
-        Index(value = ["lessonId"])
+        Index(value = ["userId", "testId"], unique = true),
+        Index(value = ["userId", ]),
+        Index(value = ["testId"])
     ]
 )
 data class TestProgressDbModel(
     @PrimaryKey
     val id: Long = 0,
     val userId: String,
-    val lessonId: String,
     val testId: String,
-    val completedQuestions: String,  // "q1,q2,q3"
-    val pendingQuestions: String     // "q4,q5,q6" - важен порядок!
+    val completedQuestions: List<String>,  // "q1,q2,q3"
+    val pendingQuestions: List<String>     // "q4,q5,q6" - важен порядок!
 )

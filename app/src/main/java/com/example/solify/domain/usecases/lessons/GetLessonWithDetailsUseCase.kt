@@ -20,7 +20,7 @@ class GetLessonWithDetailsUseCase @Inject constructor(
                 ?: return Result.failure(IllegalArgumentException("Lesson not found"))
             
             // List(testId set - completedQuestions list - pendingQuestions)
-            val testsProgress = progressRepository.getAllTestsProgress(userId, lessonId).first()
+            val testsProgress = progressRepository.getAllTestsProgress(userId).first()
             
             val testsWithStatus = lesson.tests.map { test ->
                 val testProgress = testsProgress.find { it.testId == test.id }

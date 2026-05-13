@@ -7,7 +7,6 @@ import com.example.solify.domain.entities.lesson.Level
 import com.example.solify.domain.entities.progress.Status
 import com.example.solify.domain.usecases.lessons.GetAllLessonsWithStatusUseCase
 import com.example.solify.domain.usecases.lessons.LessonWithStatus
-import com.example.solify.domain.usecases.lessons.SyncLessonsUseCase
 import com.example.solify.domain.usecases.user.GetCurrentUserUseCase
 import com.example.solify.domain.usecases.user.GetUserBadgeUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -26,7 +25,6 @@ class LessonsViewModel @Inject constructor(
     private val getAllLessonsWithStatusUseCase: GetAllLessonsWithStatusUseCase,
     private val getCurrentUserUseCase: GetCurrentUserUseCase,
     private val getUserBadgeUseCase: GetUserBadgeUseCase,
-    private val syncLessonsUseCase: SyncLessonsUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LessonsUiState())
@@ -34,13 +32,6 @@ class LessonsViewModel @Inject constructor(
 
     init {
         loadData()
-        syncLessons()
-    }
-
-    private fun syncLessons() {
-        viewModelScope.launch {
-            syncLessonsUseCase()
-        }
     }
 
     private fun loadData() {

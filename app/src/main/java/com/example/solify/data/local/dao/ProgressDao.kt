@@ -20,14 +20,14 @@ interface ProgressDao {
     @Query("SELECT * FROM lesson_progress WHERE userId = :userId AND lessonId = :lessonId")
     fun getLessonProgress(userId: String, lessonId: String): Flow<LessonProgressDbModel?>
 
-    @Query("SELECT * FROM test_progress WHERE userId = :userId AND lessonId = :lessonId AND testId = :testId")
-    fun getTestProgress(userId: String, lessonId: String, testId: String): Flow<TestProgressDbModel?>
+    @Query("SELECT * FROM test_progress WHERE userId = :userId AND testId = :testId")
+    fun getTestProgress(userId: String, testId: String): Flow<TestProgressDbModel?>
 
     @Query("SELECT * FROM lesson_progress WHERE userId = :userId")
     fun getAllLessonsProgress(userId: String): Flow<List<LessonProgressDbModel>>
 
-    @Query("SELECT * FROM test_progress WHERE userId = :userId AND lessonId = :lessonId")
-    fun getAllTestsProgress(userId: String, lessonId: String): Flow<List<TestProgressDbModel>>
+    @Query("SELECT * FROM test_progress WHERE userId = :userId")
+    fun getAllTestsProgress(userId: String): Flow<List<TestProgressDbModel>>
 
     // Insert/Update
 
@@ -46,11 +46,10 @@ interface ProgressDao {
         UPDATE test_progress 
         SET completedQuestions = :completedQuestions,
             pendingQuestions = :pendingQuestions
-        WHERE userId = :userId AND lessonId = :lessonId AND testId = :testId
+        WHERE userId = :userId AND testId = :testId
     """)
     suspend fun updateTestProgress(
         userId: String,
-        lessonId: String,
         testId: String,
         completedQuestions: String,
         pendingQuestions: String
@@ -85,6 +84,6 @@ interface ProgressDao {
     @Query("DELETE FROM lesson_progress WHERE userId = :userId AND lessonId = :lessonId")
     suspend fun resetLessonProgress(userId: String, lessonId: String)
 
-    @Query("DELETE FROM test_progress WHERE userId = :userId AND lessonId = :lessonId AND testId = :testId")
-    suspend fun resetTestProgress(userId: String, lessonId: String, testId: String)
+    @Query("DELETE FROM test_progress WHERE userId = :userId AND testId = :testId")
+    suspend fun resetTestProgress(userId: String, testId: String)
 }
