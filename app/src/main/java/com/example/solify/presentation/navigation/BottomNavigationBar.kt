@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import androidx.navigation.NavDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.solify.R
 import com.example.solify.presentation.ui.theme.Brown300
@@ -30,7 +31,7 @@ fun BottomNavigationBar(
     modifier: Modifier = Modifier
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route
+    val currentDestination = navBackStackEntry?.destination
 
     val items = listOf(
         BottomNavItem.Training,
@@ -47,12 +48,13 @@ fun BottomNavigationBar(
         windowInsets = WindowInsets()
     ) {
         items.forEach { item ->
+            val isSelected = currentDestination.hasRoute(item.route)
             NavigationBarItem(
-                selected = currentRoute == item.route,
+                selected = isSelected,
                 onClick = {
-                    if (currentRoute != item.route) {
+                    if (!isSelected) {
                         navController.navigate(item.route) {
-                            popUpTo(Screen.Training.route) {
+                            popUpTo(Screen.MainTabs.route) {
                                 saveState = true
                             }
                             launchSingleTop = true
@@ -70,7 +72,6 @@ fun BottomNavigationBar(
                     Text(
                         text = item.title,
                         style = MaterialTheme.typography.titleSmall,
-
                     )
                 },
                 colors = NavigationBarItemDefaults.colors(
@@ -106,4 +107,13 @@ sealed class BottomNavItem(
         title = "Profile",
         iconResId = R.drawable.profile_icon_active,
     )
+}
+
+private fun NavDestination?.hasRoute(route: String): Boolean {
+    var destination = this
+    while (destination != null) {
+        if (destination.route == route) return true
+        destination = destination.parent
+    }
+    return false
 }

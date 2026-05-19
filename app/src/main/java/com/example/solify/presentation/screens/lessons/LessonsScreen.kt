@@ -71,7 +71,7 @@ fun LessonsScreen(
                 Spacer(Modifier.height(20.dp))
 
                 when {
-                    uiState.isLoading -> {
+                    uiState.isLoading && !uiState.hasLoadedOnce -> {
                         Box(
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center

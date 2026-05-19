@@ -11,9 +11,7 @@ class GetUserBadgeUseCase @Inject constructor(
     suspend operator fun invoke(userId: String): BadgeResult {
         return try {
             val completedCount = progressRepository.getAllLessonsProgress(userId).first()
-                .count { lessonProgress ->
-                    lessonProgress.pendingTests.size == 1 && lessonProgress.pendingTests[0] == ""
-                }
+                .count { lessonProgress -> lessonProgress.isLessonCompleted }
 
             when {
                 completedCount >= 10 -> BadgeResult(

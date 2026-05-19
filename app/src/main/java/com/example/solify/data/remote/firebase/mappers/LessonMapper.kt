@@ -14,7 +14,3 @@ fun LessonDto.toDomain(): Lesson {
         tests = emptyList()
     )
 }
-
-fun List<LessonDto>.toDomainList(): List<Lesson> {
-    return map { it.toDomain() }
-}

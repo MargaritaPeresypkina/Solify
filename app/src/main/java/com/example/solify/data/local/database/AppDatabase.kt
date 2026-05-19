@@ -42,7 +42,7 @@ import com.example.solify.data.local.db_models.UserProgressDbModel
         ExerciseDbModel::class,
         ExerciseAnswerOptionDbModel::class
     ],
-    version = 9,
+    version = 10,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -52,22 +52,21 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun trainingDao(): TrainingDao
     abstract fun progressDao(): ProgressDao
 
-    companion object{
-
-        private val instance: AppDatabase? = null
+    companion object {
+        @Volatile
+        private var instance: AppDatabase? = null
         private val lock = Any()
 
         fun getInstance(context: Context): AppDatabase {
-             instance?.let {return it}
-
-            synchronized(lock) {
-                instance?.let { return it }
-
-                return Room.databaseBuilder(
-                    context = context,
+            return instance ?: synchronized(lock) {
+                instance ?: Room.databaseBuilder(
+                    context = context.applicationContext,
                     klass = AppDatabase::class.java,
                     name = "solify.db"
-                ).fallbackToDestructiveMigration(dropAllTables = true).build()
+                )
+                    .fallbackToDestructiveMigration(dropAllTables = true)
+                    .build()
+                    .also { instance = it }
             }
         }
     }

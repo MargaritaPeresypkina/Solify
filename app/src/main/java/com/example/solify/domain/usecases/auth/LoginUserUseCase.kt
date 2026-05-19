@@ -1,6 +1,5 @@
 package com.example.solify.domain.usecases.auth
 
-import com.example.solify.domain.utils.verifyPassword
 import com.example.solify.domain.entities.user.User
 import com.example.solify.domain.repositories.UserRepository
 import com.example.solify.domain.session.SessionManager

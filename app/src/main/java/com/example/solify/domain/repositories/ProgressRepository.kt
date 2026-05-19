@@ -10,6 +10,8 @@ interface ProgressRepository {
     fun getAllLessonsProgress(userId: String): Flow<List<LessonProgress>>
     suspend fun saveLessonProgress(userId: String, progress: LessonProgress)
     suspend fun clearLessonProgress(userId: String, lessonId: String)
+    suspend fun syncLessonsProgress(userId: String)
+    suspend fun syncTestsProgress(userId: String)
 
     // Test Progress
     fun getTestProgress(userId: String, testId: String): Flow<TestProgress?>

@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
+import androidx.room.Update
 import com.example.solify.data.local.db_models.LessonDbModel
 import com.example.solify.data.local.db_models.TestDbModel
 import com.example.solify.data.local.models.LessonWithContentDbModel
@@ -46,6 +47,12 @@ interface LessonDao {
     @Query("SELECT hint FROM questions WHERE id = :questionId")
     suspend fun getHint(questionId: String): String?
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertLesson(lesson: LessonDbModel)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertLesson(lesson: LessonDbModel): Long
+
+    @Update
+    suspend fun updateLesson(lesson: LessonDbModel)
+
+    @Query("DELETE FROM lessons")
+    suspend fun clearAllLessons()
 }

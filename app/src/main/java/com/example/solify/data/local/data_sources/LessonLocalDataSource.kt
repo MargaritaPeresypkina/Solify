@@ -84,11 +84,14 @@ class LessonLocalDataSource @Inject constructor(
         }
     }
 
-    suspend fun insertLesson(lesson: LessonDbModel) {
+    suspend fun upsertLesson(lesson: LessonDbModel) {
         try {
-            lessonDao.insertLesson(lesson)
+            val rowId = lessonDao.insertLesson(lesson)
+            if (rowId == -1L) {
+                lessonDao.updateLesson(lesson)
+            }
         } catch (e: Exception) {
-            throw DataSourceException.DatabaseError("Failed to insert lesson", e)
+            throw DataSourceException.DatabaseError("Failed to upsert lesson", e)
         }
     }
 

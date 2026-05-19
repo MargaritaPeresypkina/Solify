@@ -3,9 +3,10 @@ package com.example.solify.presentation.screens.profile
 import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.solify.R
 import com.example.solify.domain.entities.user.User
 import com.example.solify.domain.usecases.auth.LogoutUserUseCase
-import com.example.solify.domain.usecases.user.GetCurrentUserUseCase
+import com.example.solify.domain.usecases.user.GetUserBadgeUseCase
 import com.example.solify.domain.usecases.user.ObserveCurrentUserUseCase
 import com.example.solify.domain.usecases.user.UpdateUserAvatarUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -24,7 +25,8 @@ import javax.inject.Inject
 class ProfileViewModel @Inject constructor(
     observeCurrentUserUseCase: ObserveCurrentUserUseCase,
     private val logoutUserUseCase: LogoutUserUseCase,
-    private val updateUserAvatarUseCase: UpdateUserAvatarUseCase
+    private val updateUserAvatarUseCase: UpdateUserAvatarUseCase,
+    private val getUserBadgeUseCase: GetUserBadgeUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileUiState(isLoading = true))
@@ -55,6 +57,21 @@ class ProfileViewModel @Inject constructor(
                             isLoading = false
                         )
                     }
+                    user?.let { refreshBadge(it.id) }
+                }
+            }
+
+        }
+    }
+
+    private fun refreshBadge(userId: String) {
+        viewModelScope.launch {
+            getUserBadgeUseCase(userId).let { result ->
+                _uiState.update {
+                    it.copy(
+                        userBadgeRes = result.badgeRes,
+                        userLevel = result.levelName
+                    )
                 }
             }
         }
@@ -120,7 +137,9 @@ data class ProfileUiState(
     val avatarImage: String? = null,
     val isLoading: Boolean = false,
     val error: String? = null,
-    val isLoggedOut: Boolean = false
+    val isLoggedOut: Boolean = false,
+    val userBadgeRes: Int = R.drawable.none_medal,
+    val userLevel: String = "Let's try"
 )
 
 sealed class ProfileCommand {
