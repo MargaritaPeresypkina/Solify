@@ -1,6 +1,5 @@
 package com.example.solify.data.repositories
 
-import android.util.Log
 import com.example.solify.data.local.data_sources.LessonLocalDataSource
 import com.example.solify.data.local.db_models.LessonDbModel
 import com.example.solify.data.remote.firebase.data_source.LessonRemoteDataSource
@@ -9,22 +8,23 @@ import com.example.solify.domain.entities.lesson.Question
 import com.example.solify.domain.entities.lesson.Test
 import com.example.solify.domain.entities.lesson.TheoryItem
 import com.example.solify.domain.repositories.LessonRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
+import javax.inject.Singleton
 
+@Singleton
 class LessonRepositoryImpl @Inject constructor(
     private val localDataSource: LessonLocalDataSource,
     private val remoteDataSource: LessonRemoteDataSource
 ) : LessonRepository {
 
-    override fun getAllLessons(): Flow<List<Lesson>> {
-        return flow {
-            val cachedLessons = localDataSource.getAllLessons()
-            emit(cachedLessons.first())
-            Log.d("LessonsDebug", "cachedLessons ${cachedLessons.first()}")
+    override fun observeAllLessons(): Flow<List<Lesson>> =
+        localDataSource.getAllLessons().map { lessons ->
+            lessons.sortedWith(compareBy({ it.level.ordinal }, { it.order }))
+        }
 
     override suspend fun syncLessons(): Result<Unit> = withContext(Dispatchers.IO) {
         try {
@@ -51,14 +51,15 @@ class LessonRepositoryImpl @Inject constructor(
             val remoteLesson = remoteDataSource.getLessonById(lessonId).getOrNull()
 
             if (remoteLesson != null) {
-                val lessonDb = LessonDbModel(
-                    id = remoteLesson.id,
-                    title = remoteLesson.title,
-                    description = remoteLesson.description,
-                    level = remoteLesson.level.name,
-                    order = remoteLesson.order
+                localDataSource.upsertLesson(
+                    LessonDbModel(
+                        id = remoteLesson.id,
+                        title = remoteLesson.title,
+                        description = remoteLesson.description,
+                        level = remoteLesson.level.name,
+                        order = remoteLesson.order
+                    )
                 )
-                localDataSource.insertLesson(lessonDb)
                 Result.success(remoteLesson)
             } else {
                 val localLesson = localDataSource.getLessonById(lessonId)

@@ -7,9 +7,12 @@ import com.example.solify.data.remote.firebase.dto.TestProgressDto
 import com.example.solify.domain.entities.progress.LessonProgress
 import com.example.solify.domain.entities.progress.TestProgress
 import com.example.solify.domain.repositories.ProgressRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.withContext
+import com.example.solify.data.remote.firebase.mappers.toDomain
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -18,7 +21,6 @@ class ProgressRepositoryImpl @Inject constructor(
     private val localDataSource: ProgressLocalDataSource,
     private val remoteDataSource: ProgressRemoteDataSource
 ) : ProgressRepository {
-
     override fun getLessonProgress(userId: String, lessonId: String): Flow<LessonProgress?> {
         return flow {
             val cached = localDataSource.getLessonProgress(userId, lessonId).first()
@@ -26,42 +28,29 @@ class ProgressRepositoryImpl @Inject constructor(
 
             val remote = remoteDataSource.getLessonProgress(userId, lessonId).getOrNull()
             if (remote != null) {
-                val progress = LessonProgress(
-                    lessonId = remote.lessonId,
-                    completedTests = remote.completedTests.toSet(),
-                    pendingTests = remote.pendingTests.toList()
-                )
+                val progress = remote.toDomain()
                 localDataSource.insertOrUpdateLessonProgress(userId, progress)
                 emit(progress)
             }
         }
     }
 
-    override fun getAllLessonsProgress(userId: String): Flow<List<LessonProgress>> {
-        return flow {
-            val remote = remoteDataSource.getAllLessonsProgress(userId).getOrNull() ?: emptyList()
-            val progresses = remote.map { dto ->
-                LessonProgress(
-                    lessonId = dto.lessonId,
-                    completedTests = dto.completedTests.toSet(),
-                    pendingTests = dto.pendingTests.toList()
-                )
-            }
-            if (progresses.isNotEmpty()) {
-                progresses.forEach { localDataSource.insertOrUpdateLessonProgress(userId, it) }
-            }
-            emit(progresses)
-        }
+    override fun getAllLessonsProgress(userId: String): Flow<List<LessonProgress>> =
+        localDataSource.getAllLessonsProgress(userId)
+
+    override suspend fun syncLessonsProgress(userId: String) {
+        syncAllLessonsProgressFromRemote(userId)
     }
 
     override suspend fun saveLessonProgress(userId: String, progress: LessonProgress) {
+        val normalized = progress.normalize()
         val dto = LessonProgressDto(
-            lessonId = progress.lessonId,
-            completedTests = progress.completedTests.toList(),
-            pendingTests = progress.pendingTests.toList()
+            lessonId = normalized.lessonId,
+            completedTests = normalized.completedTests.toList(),
+            pendingTests = normalized.pendingTests
         )
         remoteDataSource.updateLessonProgress(userId, dto)
-        localDataSource.insertOrUpdateLessonProgress(userId, progress)
+        localDataSource.insertOrUpdateLessonProgress(userId, normalized)
     }
 
     override suspend fun clearLessonProgress(userId: String, lessonId: String) {
@@ -136,21 +125,18 @@ class ProgressRepositoryImpl @Inject constructor(
             completeTest(userId, lessonId, testId)
         }
     }
-
     override suspend fun completeTest(userId: String, lessonId: String, testId: String) {
         val lessonProgress = getLessonProgress(userId, lessonId).first() ?: return
-
         val updatedCompleted = lessonProgress.completedTests.toMutableSet()
         updatedCompleted.add(testId)
 
-        val updatedPending = lessonProgress.pendingTests.toMutableSet()
-        val newPending = updatedPending.toMutableSet()
-        newPending.remove(testId)
+        val newPending = lessonProgress.pendingTests
+            .filter { it.isNotBlank() && it != testId }
 
         val updatedProgress = lessonProgress.copy(
             completedTests = updatedCompleted,
-            pendingTests = newPending.toList()
-        )
+            pendingTests = newPending
+        ).normalize()
 
         saveLessonProgress(userId, updatedProgress)
     }
@@ -183,4 +169,28 @@ class ProgressRepositoryImpl @Inject constructor(
             localDataSource.insertOrUpdateTestProgress(userId, dto.testId, merged)
         }
     }
+
+    private fun mergeLessonProgress(
+        local: LessonProgress?,
+        remote: LessonProgress
+    ): LessonProgress {
+        val normalizedRemote = remote.normalize()
+        if (local == null) return normalizedRemote
+        if (isLessonProgressEmpty(normalizedRemote) && !isLessonProgressEmpty(local)) return local.normalize()
+        return normalizedRemote
+    }
+
+    private fun mergeTestProgress(
+        local: TestProgress?,
+        remote: TestProgress
+    ): TestProgress {
+        if (local == null) return remote
+        if (isTestProgressEmpty(remote) && !isTestProgressEmpty(local)) return local
+        return remote
+    }
+
+    private fun isLessonProgressEmpty(progress: LessonProgress): Boolean = progress.completedTests.isEmpty() && progress.activePendingTests.isEmpty()
+
+    private fun isTestProgressEmpty(progress: TestProgress): Boolean =
+        progress.completedQuestions.isEmpty() && progress.pendingQuestions.isEmpty()
 }

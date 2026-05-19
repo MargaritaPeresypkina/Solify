@@ -11,6 +11,10 @@ class Converters {
 
     @TypeConverter
     fun toStringList(value: String): List<String> {
-        return if (value.isEmpty()) emptyList() else value.split(",")
+        return if (value.isEmpty()) {
+            emptyList()
+        } else {
+            value.split(",").filter { it.isNotBlank() }
+        }
     }
 }

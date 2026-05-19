@@ -28,7 +28,7 @@ import androidx.room.PrimaryKey
     ]
 )
 data class LessonProgressDbModel(
-    @PrimaryKey
+    @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val userId: String,
     val lessonId: String,
