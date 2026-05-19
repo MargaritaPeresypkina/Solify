@@ -5,7 +5,6 @@ data class LessonProgress(
     val completedTests: Set<String> = emptySet(),
     val pendingTests: List<String> = emptyList()
 ) {
-    /** Реальные невыполненные тесты (пустые строки из Firebase/Room игнорируются). */
     val activePendingTests: List<String>
         get() = pendingTests.filter { it.isNotBlank() }
 
