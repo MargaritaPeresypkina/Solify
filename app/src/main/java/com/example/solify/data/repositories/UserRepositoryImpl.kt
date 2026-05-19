@@ -212,9 +212,6 @@ class UserRepositoryImpl @Inject constructor(
                     Log.d("test", "authResult user $user")
 
                     if (user != null) {
-                        if (!verifyPassword(password, user.passwordHash)) {
-                            return@withContext Result.failure(IllegalArgumentException("Invalid password"))
-                        }
                         return@withContext Result.success(user)
                     } else {
                         return@withContext Result.failure(Exception("User profile not found"))

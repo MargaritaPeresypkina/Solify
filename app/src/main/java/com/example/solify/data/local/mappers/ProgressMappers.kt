@@ -38,10 +38,8 @@ fun LessonProgressDbModel.toDomain(
     return LessonProgress(
         lessonId = lessonId,
         completedTests = completedTests.toSet(),
-//        testProgress = testsProgress.associate {
-//            it.testId to it.toDomain()
-//        }
-    )
+        pendingTests = pendingTests
+    ).normalize()
 }
 
 fun LessonProgress.toDbModel(

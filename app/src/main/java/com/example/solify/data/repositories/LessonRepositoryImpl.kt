@@ -26,24 +26,23 @@ class LessonRepositoryImpl @Inject constructor(
             emit(cachedLessons.first())
             Log.d("LessonsDebug", "cachedLessons ${cachedLessons.first()}")
 
-            val freshLessons = remoteDataSource.getAllLessons().getOrNull()
-            Log.d("LessonsDebug", "freshLessons $freshLessons")
-            if (freshLessons != null) {
-
-                freshLessons.forEach { lesson ->
-                    val lessonDb = LessonDbModel(
+    override suspend fun syncLessons(): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val remoteLessons = remoteDataSource.getAllLessons().getOrElse { return@withContext Result.failure(it) }
+            remoteLessons.forEach { lesson ->
+                localDataSource.upsertLesson(
+                    LessonDbModel(
                         id = lesson.id,
                         title = lesson.title,
                         description = lesson.description,
                         level = lesson.level.name,
                         order = lesson.order
                     )
-                    localDataSource.insertLesson(lessonDb)
-                }
-                emit(freshLessons)
+                )
             }
-        }.map { lessons ->
-            lessons.sortedWith(compareBy({ it.level.ordinal }, { it.order }))
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(Exception("Failed to sync lessons: ${e.message}", e))
         }
     }
 

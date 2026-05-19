@@ -9,7 +9,9 @@ import kotlinx.coroutines.flow.Flow
 interface LessonRepository {
     suspend fun getLessonById(lessonId: String): Result<Lesson>
 
-    fun getAllLessons(): Flow<List<Lesson>>
+    fun observeAllLessons(): Flow<List<Lesson>>
+
+    suspend fun syncLessons(): Result<Unit>
 
     suspend fun getTheoryItemById(
         theoryItemId: String

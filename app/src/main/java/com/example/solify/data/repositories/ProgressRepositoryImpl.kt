@@ -88,21 +88,11 @@ class ProgressRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun getAllTestsProgress(userId: String): Flow<List<TestProgress>> {
-        return flow {
-            val remote = remoteDataSource.getAllTestsProgress(userId).getOrNull() ?: emptyList()
-            val progresses = remote.map { dto ->
-                TestProgress(
-                    testId = dto.testId,
-                    completedQuestions = dto.completedQuestions.toSet(),
-                    pendingQuestions = dto.pendingQuestions
-                )
-            }
-            progresses.forEach {
-                localDataSource.insertOrUpdateTestProgress(userId, it.testId, it)
-            }
-            emit(progresses)
-        }
+    override fun getAllTestsProgress(userId: String): Flow<List<TestProgress>> =
+        localDataSource.getAllTestsProgress(userId)
+
+    override suspend fun syncTestsProgress(userId: String) {
+        syncAllTestsProgressFromRemote(userId)
     }
 
     override suspend fun saveTestProgress(userId: String, progress: TestProgress) {
@@ -167,6 +157,30 @@ class ProgressRepositoryImpl @Inject constructor(
 
     override suspend fun getNextPendingTest(userId: String, lessonId: String): String? {
         val lessonProgress = getLessonProgress(userId, lessonId).first()
-        return lessonProgress?.pendingTests?.firstOrNull()
+        return lessonProgress?.activePendingTests?.firstOrNull()
+    }
+
+    private suspend fun syncAllLessonsProgressFromRemote(userId: String) = withContext(Dispatchers.IO) {
+        val remote = remoteDataSource.getAllLessonsProgress(userId).getOrNull() ?: return@withContext
+        remote.forEach { dto ->
+            val remoteProgress = dto.toDomain().normalize()
+            val localProgress = localDataSource.getLessonProgress(userId, remoteProgress.lessonId).first()
+            val merged = mergeLessonProgress(localProgress, remoteProgress).normalize()
+            localDataSource.insertOrUpdateLessonProgress(userId, merged)
+        }
+    }
+
+    private suspend fun syncAllTestsProgressFromRemote(userId: String) = withContext(Dispatchers.IO) {
+        val remote = remoteDataSource.getAllTestsProgress(userId).getOrNull() ?: return@withContext
+        remote.forEach { dto ->
+            val remoteProgress = TestProgress(
+                testId = dto.testId,
+                completedQuestions = dto.completedQuestions.toSet(),
+                pendingQuestions = dto.pendingQuestions
+            )
+            val localProgress = localDataSource.getTestProgress(userId, dto.testId).first()
+            val merged = mergeTestProgress(localProgress, remoteProgress)
+            localDataSource.insertOrUpdateTestProgress(userId, dto.testId, merged)
+        }
     }
 }
