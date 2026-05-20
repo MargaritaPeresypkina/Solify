@@ -60,6 +60,9 @@ class LessonRepositoryImpl @Inject constructor(
                         order = remoteLesson.order
                     )
                 )
+                if (remoteLesson.theoryItems.isNotEmpty() || remoteLesson.tests.isNotEmpty()) {
+                    localDataSource.upsertLessonContent(remoteLesson)
+                }
                 Result.success(remoteLesson)
             } else {
                 val localLesson = localDataSource.getLessonById(lessonId)

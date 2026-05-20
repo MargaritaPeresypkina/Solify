@@ -115,7 +115,7 @@ fun LessonWithContentDbModel.toDomain(): Lesson {
             title = lesson.title,
             description = lesson.description,
             level = Level.valueOf(lesson.level),
-            theoryItems = theoryItems.toTheoryItemsDomain(),
+            theoryItems = theoryItems.toTheoryItemsDomain().sortedBy { it.order },
             tests = tests.toTestsDomain()
         )
 }

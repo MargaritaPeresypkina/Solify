@@ -2,8 +2,12 @@ package com.example.solify.data.remote.firebase.data_source
 
 import android.util.Log
 import com.example.solify.data.remote.firebase.dto.LessonDto
+import com.example.solify.data.remote.firebase.dto.TestDto
+import com.example.solify.data.remote.firebase.dto.TheoryItemDto
 import com.example.solify.data.remote.firebase.mappers.toDomain
 import com.example.solify.domain.entities.lesson.Lesson
+import com.example.solify.domain.entities.lesson.Test
+import com.example.solify.domain.entities.lesson.TheoryItem
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
@@ -44,18 +48,48 @@ class LessonRemoteDataSource @Inject constructor(
     suspend fun getLessonById(lessonId: String): Result<Lesson> {
         return withContext(Dispatchers.IO) {
             try {
-                val document = firestore.collection("lessons").document(lessonId).get().await()
-                val lessonDto = document.toObject(LessonDto::class.java)
+                val lessonRef = firestore.collection("lessons").document(lessonId)
+                val document = lessonRef.get().await()
+                val lessonDto = document.toObject(LessonDto::class.java)?.copy(id = document.id)
 
-                if (lessonDto != null && lessonDto.id.isNotEmpty()) {
-                    Result.success(lessonDto.toDomain())
-                } else {
-                    Result.failure(Exception("Lesson not found: $lessonId"))
+                if (lessonDto == null || lessonDto.id.isEmpty()) {
+                    return@withContext Result.failure(Exception("Lesson not found: $lessonId"))
                 }
+
+                val theoryItems = loadTheoryItems(lessonRef.path)
+                val tests = loadTests(lessonRef.path)
+
+                Result.success(
+                    lessonDto.toDomain().copy(
+                        theoryItems = theoryItems,
+                        tests = tests
+                    )
+                )
             } catch (e: Exception) {
                 Log.e("LessonRemote", "Error loading lesson $lessonId", e)
                 Result.failure(e)
             }
+        }
+    }
+
+    private suspend fun loadTheoryItems(lessonPath: String): List<TheoryItem> {
+        val snapshot = firestore.collection("$lessonPath/theory_items").get().await()
+        return snapshot.documents.mapNotNull { document ->
+            document.toObject(TheoryItemDto::class.java)
+                ?.copy(id = document.id)
+                ?.toDomain()
+        }.sortedBy { it.order }
+    }
+
+    private suspend fun loadTests(lessonPath: String): List<Test> {
+        val snapshot = firestore.collection("$lessonPath/tests").get().await()
+        return snapshot.documents.mapNotNull { document ->
+            val questionsIds = (document.get("questionsIds") as? List<*>)
+                ?.filterIsInstance<String>()
+                .orEmpty()
+            document.toObject(TestDto::class.java)
+                ?.copy(id = document.id, questionsIds = questionsIds)
+                ?.toDomain()
         }
     }
 }

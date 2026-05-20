@@ -2,6 +2,7 @@ package com.example.solify.data.local.data_sources
 
 import com.example.solify.data.local.dao.LessonDao
 import com.example.solify.data.local.db_models.LessonDbModel
+import com.example.solify.data.remote.firebase.mappers.toDbModel
 import com.example.solify.data.local.mappers.toDomain
 import com.example.solify.data.local.mappers.toLessonsDomain
 import com.example.solify.domain.entities.lesson.Lesson
@@ -33,9 +34,33 @@ class LessonLocalDataSource @Inject constructor(
             val lessonDb = lessonDao.getLessonById(lessonId)
                 ?: throw DomainException.NotFound("Lesson not found: $lessonId")
 
-            lessonDb.toDomain()
+            val lesson = lessonDb.toDomain()
+            val testsWithQuestionIds = lesson.tests.map { test ->
+                val questionsIds = lessonDao.getQuestionsIdsByTest(test.id)
+                if (questionsIds.isEmpty()) test else test.copy(questionsIds = questionsIds)
+            }
+            lesson.copy(tests = testsWithQuestionIds)
         } catch (e: Exception) {
             throw DataSourceException.DatabaseError("Failed to get lesson $lessonId", e)
+        }
+    }
+
+    suspend fun upsertLessonContent(lesson: Lesson) {
+        try {
+            lessonDao.deleteTheoryItemsForLesson(lesson.id)
+            lessonDao.deleteTestsForLesson(lesson.id)
+            if (lesson.theoryItems.isNotEmpty()) {
+                lessonDao.insertTheoryItems(
+                    lesson.theoryItems.map { it.toDbModel(lesson.id) }
+                )
+            }
+            if (lesson.tests.isNotEmpty()) {
+                lessonDao.insertTests(
+                    lesson.tests.map { it.toDbModel(lesson.id) }
+                )
+            }
+        } catch (e: Exception) {
+            throw DataSourceException.DatabaseError("Failed to upsert lesson content", e)
         }
     }
 
