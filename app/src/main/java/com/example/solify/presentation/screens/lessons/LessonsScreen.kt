@@ -97,10 +97,12 @@ fun LessonsScreen(
                                 .clip(RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp))
                                 .background(MaterialTheme.colorScheme.primary)
                         ) {
-                            item { Spacer(Modifier.height(33.dp)) }
+                            item(key = "top_spacer") {
+                                Spacer(Modifier.height(33.dp))
+                            }
 
                             if (uiState.beginnerLessons.isNotEmpty()) {
-                                item {
+                                item(key = "section_beginner") {
                                     LessonsSection(
                                         title = "BEGINNER",
                                         lessons = uiState.beginnerLessons,
@@ -110,7 +112,7 @@ fun LessonsScreen(
                             }
 
                             if (uiState.intermediateLessons.isNotEmpty()) {
-                                item {
+                                item(key = "section_intermediate") {
                                     LessonsSection(
                                         title = "INTERMEDIATE",
                                         lessons = uiState.intermediateLessons,
@@ -120,7 +122,7 @@ fun LessonsScreen(
                             }
 
                             if (uiState.advancedLessons.isNotEmpty()) {
-                                item {
+                                item(key = "section_advanced") {
                                     LessonsSection(
                                         title = "ADVANCED",
                                         lessons = uiState.advancedLessons,
@@ -129,7 +131,7 @@ fun LessonsScreen(
                                 }
                             }
 
-                            item {
+                            item(key = "bottom_spacer") {
                                 Spacer(modifier = Modifier.padding(bottom = 24.dp))
                             }
                         }
