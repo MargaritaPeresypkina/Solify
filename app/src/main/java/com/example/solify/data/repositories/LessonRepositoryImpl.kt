@@ -75,8 +75,23 @@ class LessonRepositoryImpl @Inject constructor(
 
     override suspend fun getTheoryItemById(theoryItemId: String): Result<TheoryItem> {
         return try {
-            val theoryItem = localDataSource.getTheoryItemById(theoryItemId)
-            Result.success(theoryItem)
+            val localTheoryItem = localDataSource.getTheoryItemById(theoryItemId)
+            if (localTheoryItem.content.isNotEmpty()) {
+                return Result.success(localTheoryItem)
+            }
+
+            val lessonId = localDataSource.getTheoryItemLessonId(theoryItemId)
+            if (lessonId != null) {
+                val remoteTheoryItem = remoteDataSource
+                    .getTheoryItemById(lessonId, theoryItemId)
+                    .getOrNull()
+                if (remoteTheoryItem != null && remoteTheoryItem.content.isNotEmpty()) {
+                    localDataSource.upsertTheoryItem(remoteTheoryItem, lessonId)
+                    return Result.success(remoteTheoryItem)
+                }
+            }
+
+            Result.success(localTheoryItem)
         } catch (e: Exception) {
             Result.failure(Exception("Failed to load theory item: ${e.message}"))
         }

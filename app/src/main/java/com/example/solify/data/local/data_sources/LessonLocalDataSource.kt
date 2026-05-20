@@ -53,6 +53,14 @@ class LessonLocalDataSource @Inject constructor(
                 lessonDao.insertTheoryItems(
                     lesson.theoryItems.map { it.toDbModel(lesson.id) }
                 )
+                val theoryContents = lesson.theoryItems.flatMap { item ->
+                    item.content.mapIndexed { index, content ->
+                        content.toDbModel(theoryItemId = item.id, order = index)
+                    }
+                }
+                if (theoryContents.isNotEmpty()) {
+                    lessonDao.insertTheoryContents(theoryContents)
+                }
             }
             if (lesson.tests.isNotEmpty()) {
                 lessonDao.insertTests(
@@ -73,6 +81,25 @@ class LessonLocalDataSource @Inject constructor(
             theoryItemDb.toDomain()
         } catch (e: Exception) {
             throw DataSourceException.DatabaseError("Failed to get theory item $theoryItemId", e)
+        }
+    }
+
+    suspend fun getTheoryItemLessonId(theoryItemId: String): String? {
+        return lessonDao.getTheoryItemById(theoryItemId)?.theoryItem?.lessonId
+    }
+
+    suspend fun upsertTheoryItem(theoryItem: TheoryItem, lessonId: String) {
+        try {
+            lessonDao.deleteTheoryContentsForItem(theoryItem.id)
+            lessonDao.insertTheoryItems(listOf(theoryItem.toDbModel(lessonId)))
+            val theoryContents = theoryItem.content.mapIndexed { index, content ->
+                content.toDbModel(theoryItemId = theoryItem.id, order = index)
+            }
+            if (theoryContents.isNotEmpty()) {
+                lessonDao.insertTheoryContents(theoryContents)
+            }
+        } catch (e: Exception) {
+            throw DataSourceException.DatabaseError("Failed to upsert theory item", e)
         }
     }
 

@@ -3,6 +3,7 @@ package com.example.solify.data.remote.firebase.data_source
 import android.util.Log
 import com.example.solify.data.remote.firebase.dto.LessonDto
 import com.example.solify.data.remote.firebase.dto.TestDto
+import com.example.solify.data.remote.firebase.dto.TheoryContentDto
 import com.example.solify.data.remote.firebase.dto.TheoryItemDto
 import com.example.solify.data.remote.firebase.mappers.toDomain
 import com.example.solify.domain.entities.lesson.Lesson
@@ -72,12 +73,49 @@ class LessonRemoteDataSource @Inject constructor(
         }
     }
 
+    suspend fun getTheoryItemById(lessonId: String, theoryItemId: String): Result<TheoryItem> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val theoryItemPath =
+                    "lessons/$lessonId/theory_items/$theoryItemId"
+                val document = firestore.document(theoryItemPath).get().await()
+                val theoryItemDto = document.toObject(TheoryItemDto::class.java)
+                    ?.copy(id = document.id)
+
+                if (theoryItemDto == null || theoryItemDto.id.isEmpty()) {
+                    return@withContext Result.failure(
+                        Exception("Theory item not found: $theoryItemId")
+                    )
+                }
+
+                val contents = loadTheoryContents(theoryItemPath)
+                Result.success(theoryItemDto.toDomain(contents))
+            } catch (e: Exception) {
+                Log.e("LessonRemote", "Error loading theory item $theoryItemId", e)
+                Result.failure(e)
+            }
+        }
+    }
+
     private suspend fun loadTheoryItems(lessonPath: String): List<TheoryItem> {
         val snapshot = firestore.collection("$lessonPath/theory_items").get().await()
         return snapshot.documents.mapNotNull { document ->
-            document.toObject(TheoryItemDto::class.java)
-                ?.copy(id = document.id)
-                ?.toDomain()
+            val theoryItemDto = document.toObject(TheoryItemDto::class.java)
+                ?.copy(id = document.id) ?: return@mapNotNull null
+            val contents = loadTheoryContents(document.reference.path)
+            theoryItemDto.toDomain(contents)
+        }.sortedBy { it.order }
+    }
+
+    private suspend fun loadTheoryContents(theoryItemPath: String): List<TheoryContentDto> {
+        val snapshot = firestore.collection("$theoryItemPath/theory_content").get().await()
+        return snapshot.documents.mapNotNull { document ->
+            val type = document.getString("type") ?: return@mapNotNull null
+            val content = document.getString("content") ?: return@mapNotNull null
+            val order = document.getLong("order")?.toInt()
+                ?: (document.get("order") as? Number)?.toInt()
+                ?: 0
+            TheoryContentDto(type = type, content = content, order = order)
         }.sortedBy { it.order }
     }
 

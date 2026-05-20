@@ -31,7 +31,7 @@ fun List<AnswerOptionDbModel>.toAnswerOptionsDomain(): List<AnswerOption> {
 // TheoryContent
 
 fun List<TheoryContentDbModel>.toTheoryContentsDomain(): List<TheoryContent> {
-    return map { theoryContentDbModel ->
+    return sortedBy { it.order }.map { theoryContentDbModel ->
         when(theoryContentDbModel.type) {
             ContentType.IMAGE ->
                 TheoryContent.Image(

@@ -8,6 +8,7 @@ import androidx.room.Transaction
 import androidx.room.Update
 import com.example.solify.data.local.db_models.LessonDbModel
 import com.example.solify.data.local.db_models.TestDbModel
+import com.example.solify.data.local.db_models.TheoryContentDbModel
 import com.example.solify.data.local.db_models.TheoryItemDbModel
 import com.example.solify.data.local.models.LessonWithContentDbModel
 import com.example.solify.data.local.models.QuestionWithOptionsDbModel
@@ -56,6 +57,12 @@ interface LessonDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTheoryItems(items: List<TheoryItemDbModel>)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertTheoryContents(contents: List<TheoryContentDbModel>)
+
+    @Query("DELETE FROM theory_contents WHERE theoryItemId = :theoryItemId")
+    suspend fun deleteTheoryContentsForItem(theoryItemId: String)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTests(tests: List<TestDbModel>)
