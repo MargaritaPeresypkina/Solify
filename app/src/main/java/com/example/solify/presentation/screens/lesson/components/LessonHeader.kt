@@ -36,7 +36,7 @@ fun LessonHeader(
                 .align(Alignment.CenterStart)
                 .size(width = 16.dp, height = 24.dp)
                 .clickable(onClick = onBackClick),
-            tint = Brown300
+            tint = MaterialTheme.colorScheme.onBackground
         )
 
         Text(
