@@ -20,4 +20,5 @@
     <string name="default_avatar">Default Avatar</string>
     <string name="user_badge">User Badge</string>
     <string name="go_to_lesson">Go to lesson</string>
+    <string name="exercises">Exercises</string>
 </resources>
