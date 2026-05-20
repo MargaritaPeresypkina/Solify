@@ -3,6 +3,7 @@ package com.example.solify.presentation.navigation
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -65,7 +66,8 @@ fun BottomNavigationBar(
                 icon = {
                     Icon(
                         painter = painterResource(item.iconResId),
-                        contentDescription = item.title
+                        contentDescription = item.title,
+                        modifier = modifier.size(22.5.dp)
                     )
                 },
                 label = {
