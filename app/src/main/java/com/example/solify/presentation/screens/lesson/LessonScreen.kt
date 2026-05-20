@@ -103,7 +103,9 @@ fun LessonScreen(
                                 item(key = "theory_section") {
                                     LessonTheorySection(
                                         items = uiState.theoryItems,
-                                        onTheoryClick = onTheoryClick
+                                        onTheoryClick = { theoryItemId ->
+                                            onTheoryClick(theoryItemId)
+                                        }
                                     )
                                 }
                             }
