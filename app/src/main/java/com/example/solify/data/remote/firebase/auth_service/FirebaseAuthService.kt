@@ -38,14 +38,11 @@ class FirebaseAuthService @Inject constructor(
 
             val normalizedEmail = email.trim().lowercase()
 
-            val signInMethods = firebaseAuth.fetchSignInMethodsForEmail(normalizedEmail).await()
-            if (signInMethods.signInMethods?.isNotEmpty() == true) {
-                if (currentUser.email?.lowercase() != normalizedEmail) {
-                    return Result.failure(IllegalArgumentException("Email already in use"))
-                }
+            if (isEmailUsedByAnotherAccount(normalizedEmail, currentUser.uid)) {
+                return Result.failure(IllegalArgumentException("Email already in use"))
             }
 
-            currentUser.updateEmail(normalizedEmail).await()
+            currentUser.verifyBeforeUpdateEmail(normalizedEmail).await()
 
             Result.success(Unit)
         } catch (e: FirebaseAuthException) {
@@ -164,6 +161,17 @@ class FirebaseAuthService @Inject constructor(
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    private suspend fun isEmailUsedByAnotherAccount(
+        normalizedEmail: String,
+        currentUserId: String
+    ): Boolean {
+        val snapshot = firestore.collection("users")
+            .whereEqualTo("email", normalizedEmail)
+            .get()
+            .await()
+        return snapshot.documents.any { document -> document.id != currentUserId }
     }
 
     private fun mapFirebaseAuthError(e: FirebaseAuthException): Exception {

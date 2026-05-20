@@ -4,8 +4,6 @@ import android.util.Log
 import com.example.solify.data.remote.firebase.dto.UserDto
 import com.example.solify.data.remote.firebase.mappers.toDomain
 import com.example.solify.domain.entities.user.User
-import com.google.firebase.Firebase
-import com.google.firebase.auth.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import io.github.jan.supabase.storage.Storage
 import kotlinx.coroutines.Dispatchers
@@ -63,29 +61,20 @@ class UserRemoteDataSource @Inject constructor(
     }
 
     suspend fun isEmailExists(email: String, excludeUserId: String? = null): Boolean {
-        return try {
-            val normalizedEmail = email.trim().lowercase()
-            val result = Firebase.auth.fetchSignInMethodsForEmail(normalizedEmail).await()
-            val methods = result.signInMethods ?: emptyList<String>()
-
-            if (methods.isEmpty()) return false
-
-            if (excludeUserId != null) {
-                try {
-                    val userDoc = firestore.collection("users").document(excludeUserId).get().await()
-                    val userEmail = userDoc.getString("email")
-
-                    if (userEmail?.lowercase() == normalizedEmail) {
-                        return false
-                    }
-                } catch (e: Exception) {
-                    Log.e("Email", "Error checking user document", e)
+        return withContext(Dispatchers.IO) {
+            try {
+                val normalizedEmail = email.trim().lowercase()
+                val snapshot = firestore.collection("users")
+                    .whereEqualTo("email", normalizedEmail)
+                    .get()
+                    .await()
+                snapshot.documents.any { document ->
+                    excludeUserId == null || document.id != excludeUserId
                 }
+            } catch (e: Exception) {
+                Log.e("Email", "Error checking email availability", e)
+                false
             }
-
-            methods.isNotEmpty()
-        } catch (e: Exception) {
-            false
         }
     }
 
