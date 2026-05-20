@@ -134,7 +134,7 @@ class EditProfileViewModel @Inject constructor(
             return
         }
 
-        if (originalUser?.email == currentState.email) {
+        if (originalUser.email == currentState.email) {
             performUpdate(currentState.name, currentState.surname, currentState.email, null)
             return
         }
