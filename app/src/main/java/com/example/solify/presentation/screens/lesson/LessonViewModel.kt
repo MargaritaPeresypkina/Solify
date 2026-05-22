@@ -8,6 +8,8 @@ import com.example.solify.domain.entities.progress.Status
 import com.example.solify.domain.usecases.lessons.ObserveLessonDetailsUseCase
 import com.example.solify.domain.usecases.lessons.TestWithStatus
 import com.example.solify.domain.usecases.lessons.TheoryItemSummary
+import com.example.solify.domain.usecases.progress.EnsureLessonProgressUseCase
+import com.example.solify.domain.usecases.progress.SyncLessonsProgressUseCase
 import com.example.solify.domain.usecases.progress.SyncTestsProgressUseCase
 import com.example.solify.domain.usecases.user.ObserveCurrentUserUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -31,7 +33,9 @@ class LessonViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     observeCurrentUserUseCase: ObserveCurrentUserUseCase,
     private val observeLessonDetailsUseCase: ObserveLessonDetailsUseCase,
-    private val syncTestsProgressUseCase: SyncTestsProgressUseCase
+    private val syncTestsProgressUseCase: SyncTestsProgressUseCase,
+    private val syncLessonsProgressUseCase: SyncLessonsProgressUseCase,
+    private val ensureLessonProgressUseCase: EnsureLessonProgressUseCase
 ) : ViewModel() {
 
     private val lessonId: String = savedStateHandle.get<String>("lesson_id").orEmpty()
@@ -40,19 +44,14 @@ class LessonViewModel @Inject constructor(
     val uiState: StateFlow<LessonUiState> = _uiState.asStateFlow()
 
     private val currentUserId = MutableStateFlow<String?>(null)
-    private var hasSyncedTestsOnce = false
-
     init {
         observeCurrentUserUseCase()
             .filterNotNull()
             .distinctUntilChanged { old, new -> old.id == new.id }
             .onEach { user ->
                 currentUserId.value = user.id
-                if (!hasSyncedTestsOnce) {
-                    hasSyncedTestsOnce = true
-                    viewModelScope.launch {
-                        runCatching { syncTestsProgressUseCase(user.id) }
-                    }
+                viewModelScope.launch {
+                    runCatching { ensureLessonProgressUseCase(user.id, lessonId) }
                 }
             }
             .launchIn(viewModelScope)
@@ -116,6 +115,16 @@ class LessonViewModel @Inject constructor(
         Status.COMPLETED -> R.drawable.tick_done
         Status.IN_PROGRESS -> R.drawable.lightning_in_progress
         Status.NOT_STARTED -> R.drawable.lock_uncomplete
+    }
+
+    fun refreshProgress() {
+        val userId = currentUserId.value ?: return
+        viewModelScope.launch {
+            runCatching {
+                syncTestsProgressUseCase(userId)
+                syncLessonsProgressUseCase(userId)
+            }
+        }
     }
 }
 

@@ -9,6 +9,7 @@ import com.example.solify.domain.usecases.lessons.GetAllLessonsWithStatusUseCase
 import com.example.solify.domain.usecases.lessons.LessonWithStatus
 import com.example.solify.domain.usecases.lessons.SyncLessonsUseCase
 import com.example.solify.domain.usecases.progress.SyncLessonsProgressUseCase
+import com.example.solify.domain.usecases.progress.SyncTestsProgressUseCase
 import com.example.solify.domain.usecases.user.GetUserBadgeUseCase
 import com.example.solify.domain.usecases.user.ObserveCurrentUserUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -33,7 +34,8 @@ class LessonsViewModel @Inject constructor(
     observeCurrentUserUseCase: ObserveCurrentUserUseCase,
     private val getUserBadgeUseCase: GetUserBadgeUseCase,
     private val syncLessonsUseCase: SyncLessonsUseCase,
-    private val syncLessonsProgressUseCase: SyncLessonsProgressUseCase
+    private val syncLessonsProgressUseCase: SyncLessonsProgressUseCase,
+    private val syncTestsProgressUseCase: SyncTestsProgressUseCase
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(LessonsUiState())
     val uiState: StateFlow<LessonsUiState> = _uiState.asStateFlow()
@@ -78,6 +80,18 @@ class LessonsViewModel @Inject constructor(
     private fun syncDataInBackground(userId: String) {
         viewModelScope.launch {
             syncLessonsUseCase()
+            refreshProgress(userId)
+        }
+    }
+
+    fun refreshProgress() {
+        val userId = currentUserId.value ?: return
+        refreshProgress(userId)
+    }
+
+    private fun refreshProgress(userId: String) {
+        viewModelScope.launch {
+            runCatching { syncTestsProgressUseCase(userId) }
             runCatching { syncLessonsProgressUseCase(userId) }
         }
     }
