@@ -7,6 +7,7 @@ import androidx.room.Query
 import com.example.solify.data.local.db_models.LessonProgressDbModel
 import com.example.solify.data.local.db_models.TestProgressDbModel
 import com.example.solify.data.local.db_models.UserProgressDbModel
+import com.example.solify.data.local.models.TestProgressWithLessonDbModel
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -28,6 +29,41 @@ interface ProgressDao {
 
     @Query("SELECT * FROM test_progress WHERE userId = :userId")
     fun getAllTestsProgress(userId: String): Flow<List<TestProgressDbModel>>
+
+    @Query(
+        """
+        SELECT
+            tp.userId AS userId,
+            tp.testId AS testId,
+            tp.completedQuestions AS completedQuestions,
+            tp.pendingQuestions AS pendingQuestions,
+            t.lessonId AS lessonId,
+            tp.status AS status
+        FROM test_progress AS tp
+        LEFT JOIN tests AS t ON tp.testId = t.id
+        WHERE tp.userId = :userId
+        """
+    )
+    fun getAllTestsProgressWithLesson(userId: String): Flow<List<TestProgressWithLessonDbModel>>
+
+    @Query(
+        """
+        SELECT
+            tp.userId AS userId,
+            tp.testId AS testId,
+            tp.completedQuestions AS completedQuestions,
+            tp.pendingQuestions AS pendingQuestions,
+            t.lessonId AS lessonId,
+            tp.status AS status
+        FROM test_progress AS tp
+        INNER JOIN tests AS t ON tp.testId = t.id
+        WHERE tp.userId = :userId AND t.lessonId = :lessonId
+        """
+    )
+    fun observeTestsProgressForLesson(
+        userId: String,
+        lessonId: String
+    ): Flow<List<TestProgressWithLessonDbModel>>
 
     // Insert/Update
 

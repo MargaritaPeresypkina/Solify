@@ -15,7 +15,11 @@ interface ProgressRepository {
 
     // Test Progress
     fun getTestProgress(userId: String, testId: String): Flow<TestProgress?>
+    fun observeTestProgress(userId: String, testId: String): Flow<TestProgress?>
+    suspend fun getCurrentTestProgress(userId: String, testId: String): TestProgress?
+    suspend fun isTestCompleted(userId: String, lessonId: String, testId: String): Boolean
     fun getAllTestsProgress(userId: String): Flow<List<TestProgress>>
+    fun observeTestsProgressForLesson(userId: String, lessonId: String): Flow<List<TestProgress>>
     suspend fun saveTestProgress(userId: String, progress: TestProgress)
     suspend fun clearTestProgress(userId: String, testId: String)
 

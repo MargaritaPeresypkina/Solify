@@ -18,11 +18,9 @@ data class LessonProgress(
             copy(pendingTests = activePendingTests)
         }
 
+    /** @deprecated Use [resolveLessonStatus] with test progress for UI. */
     fun toLessonStatus(): Status = when {
-        completedTests.isEmpty() && activePendingTests.isEmpty() -> Status.NOT_STARTED
         isLessonCompleted -> Status.COMPLETED
-        else -> Status.IN_PROGRESS
+        else -> Status.NOT_STARTED
     }
 }
-
-fun LessonProgress?.toDisplayStatus(): Status = this?.toLessonStatus() ?: Status.NOT_STARTED

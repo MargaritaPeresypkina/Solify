@@ -44,6 +44,15 @@ data class TestWithQuestionsDbModel(
     val questions: List<QuestionDbModel>
 )
 
+data class TestProgressWithLessonDbModel(
+    val userId: String,
+    val testId: String,
+    val completedQuestions: List<String>,
+    val pendingQuestions: List<String>,
+    val lessonId: String?,
+    val status: String = "NOT_STARTED"
+)
+
 data class LessonWithContentDbModel(
     @Embedded
     val lesson: LessonDbModel,

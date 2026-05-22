@@ -4,10 +4,12 @@ import com.example.solify.data.local.dao.ProgressDao
 import com.example.solify.data.local.db_models.LessonProgressDbModel
 import com.example.solify.data.local.db_models.TestProgressDbModel
 import com.example.solify.data.local.db_models.UserProgressDbModel
+import com.example.solify.data.local.mappers.toDbModel
 import com.example.solify.data.local.mappers.toDomain
 import com.example.solify.domain.entities.progress.LessonProgress
 import com.example.solify.domain.entities.progress.TestProgress
 import com.example.solify.domain.entities.progress.UserProgress
+import com.example.solify.presentation.debug.AgentDebugLog
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -93,6 +95,20 @@ class ProgressLocalDataSource @Inject constructor(
             }
         }
 
+    fun observeTestsProgressForLesson(
+        userId: String,
+        lessonId: String
+    ): Flow<List<TestProgress>> =
+        progressDao.observeTestsProgressForLesson(userId, lessonId).map { testsProgressDb ->
+            testsProgressDb.map { progress ->
+                try {
+                    progress.toDomain()
+                } catch (e: Exception) {
+                    throw DataSourceException.MappingError("Failed to map test progress", e)
+                }
+            }
+        }
+
     suspend fun insertOrUpdateLessonProgress(userId: String, progress: LessonProgress) {
         try {
             val dbModel = LessonProgressDbModel(
@@ -114,14 +130,39 @@ class ProgressLocalDataSource @Inject constructor(
         progress: TestProgress
     ) {
         try {
-            val dbModel = TestProgressDbModel(
+            val existing = progressDao.getTestProgress(userId, testId).first()
+            val dbModel = progress.toDbModel(
                 userId = userId,
-                testId = testId,
-                completedQuestions = progress.completedQuestions.toList(),
-                pendingQuestions = progress.pendingQuestions
+                existingId = existing?.id ?: 0
             )
             progressDao.insertOrUpdateTestProgress(dbModel)
+            // #region agent log
+            AgentDebugLog.log(
+                hypothesisId = "D",
+                location = "ProgressLocalDataSource.insertOrUpdateTestProgress",
+                message = "room insert ok",
+                data = mapOf(
+                    "testId" to testId,
+                    "completed" to progress.completedQuestions.size,
+                    "pending" to progress.pendingQuestions.size,
+                    "status" to progress.status.name
+                ),
+                runId = "post-fix"
+            )
+            // #endregion
         } catch (e: Exception) {
+            // #region agent log
+            AgentDebugLog.log(
+                hypothesisId = "D",
+                location = "ProgressLocalDataSource.insertOrUpdateTestProgress",
+                message = "room insert failed",
+                data = mapOf(
+                    "testId" to testId,
+                    "error" to (e.message ?: "unknown")
+                ),
+                runId = "post-fix"
+            )
+            // #endregion
             throw DataSourceException.DatabaseError("Failed to insert test progress", e)
         }
     }

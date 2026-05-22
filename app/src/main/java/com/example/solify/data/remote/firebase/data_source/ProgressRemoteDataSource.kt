@@ -109,8 +109,9 @@ class ProgressRemoteDataSource @Inject constructor(
                 if (data != null) {
                     val progress = TestProgressDto(
                         testId = document.id,
-                        completedQuestions = (data["completedQuestions"] as? List<*>)?.filterIsInstance<String>() ?: emptyList(),
-                        pendingQuestions = (data["pendingQuestions"] as? List<*>)?.filterIsInstance<String>() ?: emptyList()
+                        completedQuestions = readStringList(data, "completedQuestions", "completedTests"),
+                        pendingQuestions = readStringList(data, "pendingQuestions", "pendingTests"),
+                        status = readStatus(data)
                     )
                     Result.success(progress)
                 } else {
@@ -138,8 +139,9 @@ class ProgressRemoteDataSource @Inject constructor(
                     if (data != null) {
                         TestProgressDto(
                             testId = doc.id,
-                            completedQuestions = (data["completedQuestions"] as? List<*>)?.filterIsInstance<String>() ?: emptyList(),
-                            pendingQuestions = (data["pendingQuestions"] as? List<*>)?.filterIsInstance<String>() ?: emptyList()
+                            completedQuestions = readStringList(data, "completedQuestions", "completedTests"),
+                            pendingQuestions = readStringList(data, "pendingQuestions", "pendingTests"),
+                            status = readStatus(data)
                         )
                     } else null
                 }
@@ -151,12 +153,28 @@ class ProgressRemoteDataSource @Inject constructor(
         }
     }
 
+    private fun readStringList(data: Map<String, Any>, vararg keys: String): List<String> {
+        keys.forEach { key ->
+            val list = (data[key] as? List<*>)?.filterIsInstance<String>()
+            if (!list.isNullOrEmpty()) return list
+        }
+        return emptyList()
+    }
+
+    private fun readStatus(data: Map<String, Any>): String {
+        val raw = data["status"] as? String
+        if (!raw.isNullOrBlank()) return raw
+        val completed = readStringList(data, "completedQuestions", "completedTests")
+        return if (completed.isNotEmpty()) "IN_PROGRESS" else "NOT_STARTED"
+    }
+
     suspend fun updateTestProgress(userId: String, progress: TestProgressDto): Result<Unit> {
         return withContext(Dispatchers.IO) {
             try {
                 val data = hashMapOf(
                     "completedQuestions" to progress.completedQuestions,
-                    "pendingQuestions" to progress.pendingQuestions
+                    "pendingQuestions" to progress.pendingQuestions,
+                    "status" to progress.status
                 )
                 firestore
                     .collection("users")
