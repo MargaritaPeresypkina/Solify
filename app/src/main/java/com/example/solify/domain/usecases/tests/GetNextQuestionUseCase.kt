@@ -4,6 +4,7 @@ import com.example.solify.domain.entities.lesson.Question
 import com.example.solify.domain.repositories.LessonRepository
 import com.example.solify.domain.repositories.ProgressRepository
 import com.example.solify.domain.utils.value
+import com.example.solify.presentation.debug.AgentDebugLog
 import javax.inject.Inject
 
 class GetNextQuestionUseCase @Inject constructor(
@@ -16,16 +17,40 @@ class GetNextQuestionUseCase @Inject constructor(
         testId: String
     ): Result<Question?> {
         return try {
-            val progress = progressRepository.getTestProgress(userId, testId).value()
+            val progress = progressRepository.getCurrentTestProgress(userId, testId)
                 ?: return Result.failure(IllegalStateException("Test not started. Call StartTestUseCase first."))
 
             val pendingQuestions = progress.pendingQuestions
+            // #region agent log
+            AgentDebugLog.log(
+                hypothesisId = "B",
+                location = "GetNextQuestionUseCase",
+                message = "pending queue state",
+                data = mapOf(
+                    "testId" to testId,
+                    "pendingSize" to pendingQuestions.size,
+                    "completedSize" to progress.completedQuestions.size,
+                    "firstPending" to pendingQuestions.firstOrNull()
+                )
+            )
+            // #endregion
             if (pendingQuestions.isEmpty()) {
                 return Result.success(null)
             }
 
             val nextQuestionId = pendingQuestions.first()
-            val nextQuestion = lessonRepository.getQuestionById(nextQuestionId).getOrNull()
+            val nextQuestion = lessonRepository.getQuestionById(nextQuestionId, testId).getOrNull()
+            // #region agent log
+            AgentDebugLog.log(
+                hypothesisId = "C",
+                location = "GetNextQuestionUseCase",
+                message = "question load result",
+                data = mapOf(
+                    "nextQuestionId" to nextQuestionId,
+                    "loaded" to (nextQuestion != null)
+                )
+            )
+            // #endregion
 
             Result.success(nextQuestion)
         } catch (e: Exception) {

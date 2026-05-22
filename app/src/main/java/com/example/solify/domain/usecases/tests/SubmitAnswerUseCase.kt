@@ -18,17 +18,18 @@ class SubmitAnswerUseCase @Inject constructor(
         selectedOptionId: String
     ): Result<SubmitAnswerResult> {
         return try {
-            val question = lessonRepository.getQuestionById(questionId).getOrNull()
+            val question = lessonRepository.getQuestionById(questionId, testId).getOrNull()
                 ?: return Result.failure(IllegalArgumentException("Question not found"))
 
             val isCorrect = question.correctOptionId == selectedOptionId
 
-            val currentProgress = progressRepository.getTestProgress(userId, testId).value()
+            val currentProgress = progressRepository.getCurrentTestProgress(userId, testId)
                 ?: return Result.failure(IllegalStateException("Test not started"))
 
             val updatedProgress = if (isCorrect) {
                 TestProgress(
                     testId = testId,
+                    lessonId = lessonId,
                     completedQuestions = currentProgress.completedQuestions + questionId,
                     pendingQuestions = currentProgress.pendingQuestions.filter { it != questionId }
                 )
@@ -38,19 +39,19 @@ class SubmitAnswerUseCase @Inject constructor(
                 newPending.add(questionId)
                 TestProgress(
                     testId = testId,
+                    lessonId = lessonId,
                     completedQuestions = currentProgress.completedQuestions,
                     pendingQuestions = newPending
                 )
             }
 
-            val test = lessonRepository.getTestById(testId).getOrNull()
+            val test = lessonRepository.getTestById(testId, lessonId).getOrNull()
                 ?: return Result.failure(IllegalArgumentException("Test not found"))
 
             val isTestCompleted = updatedProgress.completedQuestions.size == test.questionsIds.size
             if (isTestCompleted) {
+                progressRepository.completeTest(userId, lessonId, testId)
                 progressRepository.clearTestProgress(userId, testId)
-//                progressRepository.markTestAsCompleted(userId, lessonId, testId)
-                checkAndMarkLessonCompleted(userId, lessonId)
             } else {
                 progressRepository.saveTestProgress(userId, updatedProgress)
             }
@@ -69,19 +70,6 @@ class SubmitAnswerUseCase @Inject constructor(
         }
     }
 
-    private suspend fun checkAndMarkLessonCompleted(userId: String, lessonId: String) {
-        val testsProgress = progressRepository.getAllTestsProgress(userId).value() ?: return
-        val lessonProgress = progressRepository.getLessonProgress(userId, lessonId).value()
-        val alreadyCompleted = lessonProgress?.completedTests ?: emptySet()
-
-//        val allTestsCompleted = testsProgress.all { testProgress ->
-//            alreadyCompleted.contains(testProgress.testId) || testProgress.completedQuestions.isNotEmpty()
-//        }
-
-//        if (allTestsCompleted && testsProgress.isNotEmpty()) {
-//            progressRepository.markLessonAsCompleted(userId, lessonId)
-//        }
-    }
 }
 
 data class SubmitAnswerResult(
