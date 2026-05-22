@@ -11,15 +11,17 @@ interface LessonRepository {
 
     fun observeAllLessons(): Flow<List<Lesson>>
 
+    fun observeTestIdsByLesson(): Flow<Map<String, List<String>>>
+
     suspend fun syncLessons(): Result<Unit>
 
     suspend fun getTheoryItemById(
         theoryItemId: String
     ): Result<TheoryItem>
 
-    suspend fun getTestById(testId: String): Result<Test>
+    suspend fun getTestById(testId: String, lessonId: String): Result<Test>
 
-    suspend fun getQuestionById(questionId: String): Result<Question>
+    suspend fun getQuestionById(questionId: String, testId: String? = null): Result<Question>
 
     suspend fun getHint(questionId: String): Result<String>
 }

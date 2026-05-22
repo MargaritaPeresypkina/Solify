@@ -7,5 +7,6 @@ data class Question(
     val imageUrl: String?,
     val options: List<AnswerOption>,
     val correctOptionId: String,
-    val hint: String
+    val hint: String,
+    val testId: String = ""
 )

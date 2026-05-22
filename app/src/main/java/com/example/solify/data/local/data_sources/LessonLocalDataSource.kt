@@ -1,7 +1,9 @@
 package com.example.solify.data.local.data_sources
 
 import com.example.solify.data.local.dao.LessonDao
+import com.example.solify.data.local.db_models.AnswerOptionDbModel
 import com.example.solify.data.local.db_models.LessonDbModel
+import com.example.solify.data.local.db_models.QuestionDbModel
 import com.example.solify.data.remote.firebase.mappers.toDbModel
 import com.example.solify.data.local.mappers.toDomain
 import com.example.solify.data.local.mappers.toLessonsDomain
@@ -20,6 +22,11 @@ class LessonLocalDataSource @Inject constructor(
 ) {
 
     // Lessons
+    fun observeTestIdsByLesson(): Flow<Map<String, List<String>>> =
+        lessonDao.observeAllTests().map { tests ->
+            tests.groupBy({ it.lessonId }, { it.id })
+        }
+
     fun getAllLessons(): Flow<List<Lesson>> =
         lessonDao.getAllLessons().map { lessons ->
             try {
@@ -36,7 +43,8 @@ class LessonLocalDataSource @Inject constructor(
 
             val lesson = lessonDb.toDomain()
             val testsWithQuestionIds = lesson.tests.map { test ->
-                val questionsIds = lessonDao.getQuestionsIdsByTest(test.id)
+                val storedIds = lessonDao.getTestById(test.id)?.questionsIds.orEmpty()
+                val questionsIds = storedIds.ifEmpty { lessonDao.getQuestionsIdsByTest(test.id) }
                 if (questionsIds.isEmpty()) test else test.copy(questionsIds = questionsIds)
             }
             lesson.copy(tests = testsWithQuestionIds)
@@ -109,7 +117,9 @@ class LessonLocalDataSource @Inject constructor(
             val testDb = lessonDao.getTestById(testId)
                 ?: throw DomainException.NotFound("Test not found: $testId")
 
-            val questionsIds = lessonDao.getQuestionsIdsByTest(testId)
+            val questionsIds = testDb.questionsIds.ifEmpty {
+                lessonDao.getQuestionsIdsByTest(testId)
+            }
             testDb.toDomain(questionsIds)
         } catch (e: Exception) {
             throw DataSourceException.DatabaseError("Failed to get test $testId", e)
@@ -118,12 +128,55 @@ class LessonLocalDataSource @Inject constructor(
 
 
     // Questions
+    suspend fun hasQuestion(questionId: String): Boolean =
+        lessonDao.questionExists(questionId) > 0
+
     suspend fun getQuestionById(questionId: String): Question {
         return try {
             val questionDb = lessonDao.getQuestionById(questionId)
+                ?: throw DomainException.NotFound("Question not found: $questionId")
             questionDb.toDomain()
         } catch (e: Exception) {
             throw DataSourceException.DatabaseError("Failed to get question $questionId", e)
+        }
+    }
+
+    suspend fun upsertQuestion(question: Question) {
+        try {
+            lessonDao.insertQuestion(
+                QuestionDbModel(
+                    id = question.id,
+                    testId = question.testId,
+                    text = question.text,
+                    imageUrl = question.imageUrl,
+                    hint = question.hint,
+                    correctOptionId = question.correctOptionId
+                )
+            )
+            if (question.options.isNotEmpty()) {
+                lessonDao.insertAnswerOptions(
+                    question.options.map { option ->
+                        AnswerOptionDbModel(
+                            id = option.id,
+                            questionId = question.id,
+                            text = option.text
+                        )
+                    }
+                )
+            }
+        } catch (e: Exception) {
+            throw DataSourceException.DatabaseError("Failed to upsert question ${question.id}", e)
+        }
+    }
+
+    suspend fun updateTestQuestionsIds(testId: String, lessonId: String, questionsIds: List<String>) {
+        try {
+            val testDb = lessonDao.getTestById(testId) ?: return
+            lessonDao.insertTests(
+                listOf(testDb.copy(questionsIds = questionsIds))
+            )
+        } catch (e: Exception) {
+            throw DataSourceException.DatabaseError("Failed to update test questions ids", e)
         }
     }
 

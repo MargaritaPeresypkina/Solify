@@ -6,7 +6,9 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
+import com.example.solify.data.local.db_models.AnswerOptionDbModel
 import com.example.solify.data.local.db_models.LessonDbModel
+import com.example.solify.data.local.db_models.QuestionDbModel
 import com.example.solify.data.local.db_models.TestDbModel
 import com.example.solify.data.local.db_models.TheoryContentDbModel
 import com.example.solify.data.local.db_models.TheoryItemDbModel
@@ -36,13 +38,16 @@ interface LessonDao {
     @Query("SELECT * FROM tests WHERE id = :testId")
     suspend fun getTestById(testId: String): TestDbModel?
 
+    @Query("SELECT * FROM tests")
+    fun observeAllTests(): Flow<List<TestDbModel>>
+
     // Questions
     @Query("SELECT id FROM questions WHERE testId = :testId")
     suspend fun getQuestionsIdsByTest(testId: String): List<String>
 
     @Transaction
     @Query("SELECT * FROM questions WHERE id = :questionId")
-    suspend fun getQuestionById(questionId: String): QuestionWithOptionsDbModel
+    suspend fun getQuestionById(questionId: String): QuestionWithOptionsDbModel?
 
 
     // Для GetHintUseCase
@@ -66,6 +71,15 @@ interface LessonDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTests(tests: List<TestDbModel>)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertQuestion(question: QuestionDbModel)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAnswerOptions(options: List<AnswerOptionDbModel>)
+
+    @Query("SELECT COUNT(*) FROM questions WHERE id = :questionId")
+    suspend fun questionExists(questionId: String): Int
 
     @Query("DELETE FROM theory_items WHERE lessonId = :lessonId")
     suspend fun deleteTheoryItemsForLesson(lessonId: String)

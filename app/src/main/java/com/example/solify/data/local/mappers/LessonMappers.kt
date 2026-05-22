@@ -81,7 +81,8 @@ fun QuestionWithOptionsDbModel.toDomain(): Question {
             imageUrl = question.imageUrl,
             options = options.toAnswerOptionsDomain(),
             correctOptionId = question.correctOptionId,
-            hint = question.hint
+            hint = question.hint,
+            testId = question.testId
         )
 }
 

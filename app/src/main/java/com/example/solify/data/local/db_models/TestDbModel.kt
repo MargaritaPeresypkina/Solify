@@ -22,5 +22,6 @@ data class TestDbModel(
     val id: String,
     val lessonId: String,
     val title: String,
-    val description: String
+    val description: String,
+    val questionsIds: List<String> = emptyList()
 )

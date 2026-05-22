@@ -69,7 +69,8 @@ fun TestDto.toDbModel(lessonId: String): TestDbModel = TestDbModel(
     id = id,
     lessonId = lessonId,
     title = title,
-    description = description
+    description = description,
+    questionsIds = questionsIds
 )
 
 fun TheoryItem.toDbModel(lessonId: String): TheoryItemDbModel = TheoryItemDbModel(
@@ -84,5 +85,6 @@ fun Test.toDbModel(lessonId: String): TestDbModel = TestDbModel(
     id = id,
     lessonId = lessonId,
     title = title,
-    description = description
+    description = description,
+    questionsIds = questionsIds
 )
