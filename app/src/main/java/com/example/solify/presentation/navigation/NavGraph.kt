@@ -17,6 +17,7 @@ import com.example.solify.presentation.MainViewModel
 import com.example.solify.presentation.screens.auth_choice.AuthChoiceScreen
 import com.example.solify.presentation.screens.edit_profile.EditProfileScreen
 import com.example.solify.presentation.screens.lesson.LessonScreen
+import com.example.solify.presentation.screens.test.TestScreen
 import com.example.solify.presentation.screens.theory.TheoryScreen
 import com.example.solify.presentation.screens.lessons.LessonsScreen
 import com.example.solify.presentation.screens.login.LoginScreen
@@ -116,7 +117,17 @@ fun NavGraph(
                 onNavigateBack = { navController.popBackStack() },
                 onTheoryClick = { theoryItemId ->
                     navController.navigate(Screen.Theory.createRoute(theoryItemId))
+                },
+                onTestClick = { testId ->
+                    navController.navigate(Screen.Test.createRoute(lessonId, testId))
                 }
+            )
+        }
+
+        composable(route = Screen.Test.route) {
+            TestScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onTestCompleted = { navController.popBackStack() }
             )
         }
 
@@ -159,5 +170,13 @@ sealed class Screen(val route: String) {
         fun createRoute(theoryItemId: String): String = "theory/$theoryItemId"
         fun getTheoryItemId(arguments: Bundle?): String =
             arguments?.getString("theory_item_id").orEmpty()
+    }
+
+    data object Test : Screen("test/{lesson_id}/{test_id}") {
+        fun createRoute(lessonId: String, testId: String): String = "test/$lessonId/$testId"
+        fun getLessonId(arguments: Bundle?): String =
+            arguments?.getString("lesson_id").orEmpty()
+        fun getTestId(arguments: Bundle?): String =
+            arguments?.getString("test_id").orEmpty()
     }
 }

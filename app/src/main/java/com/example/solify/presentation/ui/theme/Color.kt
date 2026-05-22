@@ -3,6 +3,7 @@ package com.example.solify.presentation.ui.theme
 import androidx.compose.ui.graphics.Color
 
 val Green = Color(0xFF47A025)
+val Green100 = Green
 
 val Brown100 = Color(0x332B2118) //20
 val Brown200 = Color(0x662B2118) //40
