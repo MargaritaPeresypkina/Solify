@@ -2,14 +2,17 @@ package com.example.solify.domain.usecases.user
 
 import com.example.solify.R
 import com.example.solify.domain.repositories.ProgressRepository
+import com.example.solify.domain.sync.UserDataSyncCoordinator
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
 class GetUserBadgeUseCase @Inject constructor(
-    private val progressRepository: ProgressRepository
+    private val progressRepository: ProgressRepository,
+    private val userDataSyncCoordinator: UserDataSyncCoordinator
 ) {
     suspend operator fun invoke(userId: String): BadgeResult {
         return try {
+            userDataSyncCoordinator.ensureSynced(userId)
             val completedCount = progressRepository.getAllLessonsProgress(userId).first()
                 .count { lessonProgress -> lessonProgress.isLessonCompleted }
 
