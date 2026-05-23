@@ -23,6 +23,7 @@ import com.example.solify.presentation.screens.lessons.LessonsScreen
 import com.example.solify.presentation.screens.login.LoginScreen
 import com.example.solify.presentation.screens.profile.ProfileScreen
 import com.example.solify.presentation.screens.register.RegisterScreen
+import com.example.solify.presentation.screens.trainers.TrainersScreen
 import com.example.solify.presentation.screens.trainings.TrainingScreen
 
 @Composable
@@ -97,7 +98,12 @@ fun NavGraph(
             }
 
             composable(Screen.Training.route) {
-                TrainingScreen(navController = navController)
+                TrainingScreen(
+                    navController = navController,
+                    onTrainingClick = { trainingId ->
+                        navController.navigate(Screen.Trainers.createRoute(trainingId))
+                    }
+                )
             }
 
             composable(Screen.Lessons.route) {
@@ -108,6 +114,14 @@ fun NavGraph(
                     }
                 )
             }
+        }
+
+        composable(route = Screen.Trainers.route) {
+            val trainingId = Screen.Trainers.getTrainingId(it.arguments)
+            TrainersScreen(
+                trainingId = trainingId,
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
 
         composable(route = Screen.Lesson.route) {
@@ -159,6 +173,11 @@ sealed class Screen(val route: String) {
     data object Profile : Screen("profile")
     data object EditProfile : Screen("edit_profile")
     data object Training : Screen("training")
+    data object Trainers : Screen("trainers/{training_id}") {
+        fun createRoute(trainingId: String): String = "trainers/$trainingId"
+        fun getTrainingId(arguments: Bundle?): String =
+            arguments?.getString("training_id").orEmpty()
+    }
     data object Lessons : Screen("lessons")
     data object Lesson : Screen("lesson/{lesson_id}") {
         fun createRoute(lessonId: String): String = "lesson/$lessonId"
