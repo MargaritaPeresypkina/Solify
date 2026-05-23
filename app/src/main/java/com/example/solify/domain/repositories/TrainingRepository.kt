@@ -2,8 +2,13 @@ package com.example.solify.domain.repositories
 
 import com.example.solify.domain.entities.training.Exercise
 import com.example.solify.domain.entities.training.Training
+import kotlinx.coroutines.flow.Flow
 
 interface TrainingRepository {
+
+    fun observeAllTrainings(): Flow<List<Training>>
+
+    suspend fun syncTrainings(): Result<Unit>
 
     suspend fun getAllTrainings(): Result<List<Training>?>
 
