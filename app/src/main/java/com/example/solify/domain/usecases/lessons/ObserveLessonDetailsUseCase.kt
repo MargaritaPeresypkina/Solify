@@ -6,7 +6,6 @@ import com.example.solify.domain.entities.progress.TestProgress
 import com.example.solify.domain.entities.progress.resolveTestStatus
 import com.example.solify.domain.repositories.LessonRepository
 import com.example.solify.domain.repositories.ProgressRepository
-import com.example.solify.presentation.debug.AgentDebugLog
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.channelFlow
@@ -40,25 +39,6 @@ class ObserveLessonDetailsUseCase @Inject constructor(
                 .map { (_, progresses) -> progresses.maxBy { it.completedQuestions.size } }
                 .filter { it.testId in lessonTestIds }
 
-            // #region agent log
-            AgentDebugLog.log(
-                hypothesisId = "A",
-                location = "ObserveLessonDetailsUseCase",
-                message = "progress sources merged",
-                data = mapOf(
-                    "lessonId" to lessonId,
-                    "lessonTestIdsCount" to lessonTestIds.size,
-                    "allProgressCount" to allTestsProgress.size,
-                    "fromAllCount" to fromAll.size,
-                    "joinedCount" to joinedTestsProgress.size,
-                    "mergedCount" to mergedTestsProgress.size,
-                    "mergedCompletedTotal" to mergedTestsProgress.sumOf { it.completedQuestions.size },
-                    "lessonCompletedTestsCount" to (lessonProgress?.completedTests?.size ?: 0)
-                ),
-                runId = "post-fix"
-            )
-            // #endregion
-
             Result.success(mapLessonDetails(lesson, mergedTestsProgress, lessonProgress))
         }
             .distinctUntilChanged { old, new ->
@@ -89,20 +69,6 @@ class ObserveLessonDetailsUseCase @Inject constructor(
         val tests = lesson.tests.map { test ->
             val testProgress = testsProgress.find { it.testId == test.id }
             val status = resolveTestStatus(test.id, testProgress, lessonProgress)
-            // #region agent log
-            AgentDebugLog.log(
-                hypothesisId = "B",
-                location = "ObserveLessonDetailsUseCase",
-                message = "test status mapped",
-                data = mapOf(
-                    "lessonId" to lesson.id,
-                    "testId" to test.id,
-                    "status" to status.name,
-                    "completedQ" to (testProgress?.completedQuestions?.size ?: 0),
-                    "foundProgress" to (testProgress != null)
-                )
-            )
-            // #endregion
             TestWithStatus(
                 id = test.id,
                 title = test.title,

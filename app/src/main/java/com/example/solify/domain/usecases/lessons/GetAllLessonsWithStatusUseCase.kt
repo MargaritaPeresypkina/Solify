@@ -6,7 +6,6 @@ import com.example.solify.domain.entities.progress.resolveLessonStatus
 import com.example.solify.domain.repositories.LessonRepository
 import com.example.solify.domain.repositories.ProgressRepository
 import kotlinx.coroutines.flow.Flow
-import com.example.solify.presentation.debug.AgentDebugLog
 import kotlinx.coroutines.flow.combine
 import javax.inject.Inject
 
@@ -34,24 +33,6 @@ class GetAllLessonsWithStatusUseCase @Inject constructor(
                     lessonProgress = lessonProgress,
                     testsProgress = testsProgress
                 )
-                // #region agent log
-                if (status == Status.IN_PROGRESS || lessonTestIds.isNotEmpty()) {
-                    val completedInLesson = testsProgress
-                        .filter { it.testId in lessonTestIds }
-                        .sumOf { it.completedQuestions.size }
-                    AgentDebugLog.log(
-                        hypothesisId = "C",
-                        location = "GetAllLessonsWithStatusUseCase",
-                        message = "lesson status mapped",
-                        data = mapOf(
-                            "lessonId" to lesson.id,
-                            "status" to status.name,
-                            "lessonTestIdsCount" to lessonTestIds.size,
-                            "completedQuestionsInLesson" to completedInLesson
-                        )
-                    )
-                }
-                // #endregion
 
                 LessonWithStatus(
                     id = lesson.id,

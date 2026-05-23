@@ -2,18 +2,20 @@ package com.example.solify.data.repositories
 
 import com.example.solify.data.local.data_sources.ProgressLocalDataSource
 import com.example.solify.data.remote.firebase.data_source.ProgressRemoteDataSource
+import com.example.solify.data.remote.firebase.dto.ExerciseProgressDto
 import com.example.solify.data.remote.firebase.dto.LessonProgressDto
 import com.example.solify.data.remote.firebase.dto.TestProgressDto
+import com.example.solify.domain.entities.progress.ExerciseProgress
 import com.example.solify.domain.entities.progress.LessonProgress
 import com.example.solify.domain.entities.progress.TestProgress
 import com.example.solify.domain.entities.progress.withDerivedStatus
 import com.example.solify.domain.repositories.ProgressRepository
-import com.example.solify.presentation.debug.AgentDebugLog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
+import com.example.solify.data.local.mappers.toDomain as exerciseProgressDtoToDomain
 import com.example.solify.data.remote.firebase.mappers.toDomain
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -112,6 +114,40 @@ class ProgressRepositoryImpl @Inject constructor(
         remoteDataSource.updateTestProgress(userId, emptyProgress)
     }
 
+    override fun observeExerciseProgress(userId: String, trainerId: String): Flow<ExerciseProgress?> =
+        localDataSource.getExerciseProgress(userId, trainerId)
+
+    override suspend fun getCurrentExerciseProgress(userId: String, trainerId: String): ExerciseProgress? {
+        val local = localDataSource.getExerciseProgress(userId, trainerId).first()
+        if (local != null && !isExerciseProgressEmpty(local)) return local
+
+        val remote = remoteDataSource.getExerciseProgress(userId, trainerId).getOrNull() ?: return local
+        val remoteProgress = remote.exerciseProgressDtoToDomain()
+        val merged = mergeExerciseProgress(local, remoteProgress)
+        if (!isExerciseProgressEmpty(merged)) {
+            localDataSource.insertOrUpdateExerciseProgress(userId, trainerId, merged)
+        }
+        return merged.takeUnless { isExerciseProgressEmpty(it) }
+    }
+
+    override suspend fun saveExerciseProgress(userId: String, progress: ExerciseProgress) {
+        val normalized = progress.withDerivedStatus()
+        localDataSource.insertOrUpdateExerciseProgress(userId, normalized.trainerId, normalized)
+        val dto = ExerciseProgressDto(
+            trainerId = normalized.trainerId,
+            completedExercises = normalized.completedExercises.toList(),
+            pendingExercises = normalized.pendingExercises,
+            status = normalized.status.name
+        )
+        remoteDataSource.updateExerciseProgress(userId, dto)
+    }
+
+    override suspend fun clearExerciseProgress(userId: String, trainerId: String) {
+        localDataSource.resetExerciseProgress(userId, trainerId)
+        val emptyProgress = ExerciseProgressDto(trainerId = trainerId)
+        remoteDataSource.updateExerciseProgress(userId, emptyProgress)
+    }
+
     override suspend fun completeQuestion(
         userId: String,
         lessonId: String,
@@ -151,19 +187,6 @@ class ProgressRepositoryImpl @Inject constructor(
         ).normalize()
 
         saveLessonProgress(userId, updatedProgress)
-        // #region agent log
-        AgentDebugLog.log(
-            hypothesisId = "C",
-            location = "ProgressRepositoryImpl.completeTest",
-            message = "lesson progress saved after test complete",
-            data = mapOf(
-                "lessonId" to lessonId,
-                "testId" to testId,
-                "completedTestsCount" to updatedProgress.completedTests.size
-            ),
-            runId = "post-fix"
-        )
-        // #endregion
     }
 
     override suspend fun getNextPendingTest(userId: String, lessonId: String): String? {
@@ -191,19 +214,6 @@ class ProgressRepositoryImpl @Inject constructor(
             )
             val localProgress = localDataSource.getTestProgress(userId, dto.testId).first()
             val merged = mergeTestProgress(localProgress, remoteProgress)
-            // #region agent log
-            AgentDebugLog.log(
-                hypothesisId = "A",
-                location = "ProgressRepositoryImpl.syncAllTestsProgress",
-                message = "merge test progress",
-                data = mapOf(
-                    "testId" to dto.testId,
-                    "localCompleted" to (localProgress?.completedQuestions?.size ?: 0),
-                    "remoteCompleted" to remoteProgress.completedQuestions.size,
-                    "mergedCompleted" to merged.completedQuestions.size
-                )
-            )
-            // #endregion
             localDataSource.insertOrUpdateTestProgress(userId, dto.testId, merged)
         }
     }
@@ -257,4 +267,31 @@ class ProgressRepositoryImpl @Inject constructor(
 
     private fun isTestProgressEmpty(progress: TestProgress): Boolean =
         progress.completedQuestions.isEmpty() && progress.pendingQuestions.isEmpty()
+
+    private fun mergeExerciseProgress(
+        local: ExerciseProgress?,
+        remote: ExerciseProgress
+    ): ExerciseProgress {
+        if (local == null) return remote
+        if (isExerciseProgressEmpty(remote) && !isExerciseProgressEmpty(local)) return local
+        if (isExerciseProgressEmpty(local)) return remote
+
+        val mergedCompleted = local.completedExercises + remote.completedExercises
+        val mergedPending = (local.pendingExercises + remote.pendingExercises)
+            .distinct()
+            .filter { exerciseId -> exerciseId !in mergedCompleted }
+
+        return ExerciseProgress(
+            trainerId = remote.trainerId,
+            completedExercises = mergedCompleted,
+            pendingExercises = when {
+                mergedPending.isNotEmpty() -> mergedPending
+                local.completedExercises.size >= remote.completedExercises.size -> local.pendingExercises
+                else -> remote.pendingExercises
+            }
+        ).withDerivedStatus()
+    }
+
+    private fun isExerciseProgressEmpty(progress: ExerciseProgress): Boolean =
+        progress.completedExercises.isEmpty() && progress.pendingExercises.isEmpty()
 }

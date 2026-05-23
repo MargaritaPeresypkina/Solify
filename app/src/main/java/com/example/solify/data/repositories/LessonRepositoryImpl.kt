@@ -9,7 +9,6 @@ import com.example.solify.domain.entities.lesson.Question
 import com.example.solify.domain.entities.lesson.Test
 import com.example.solify.domain.entities.lesson.TheoryItem
 import com.example.solify.domain.repositories.LessonRepository
-import com.example.solify.presentation.debug.AgentDebugLog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -106,32 +105,9 @@ class LessonRepositoryImpl @Inject constructor(
     override suspend fun getTestById(testId: String, lessonId: String): Result<Test> {
         return try {
             var test = localDataSource.getTestById(testId)
-            // #region agent log
-            AgentDebugLog.log(
-                hypothesisId = "A",
-                location = "LessonRepositoryImpl.getTestById",
-                message = "local test loaded",
-                data = mapOf(
-                    "testId" to testId,
-                    "lessonId" to lessonId,
-                    "localQuestionsIdsSize" to test.questionsIds.size
-                )
-            )
-            // #endregion
 
             if (test.questionsIds.isEmpty()) {
                 val remoteTest = questionRemoteDataSource.getTestById(lessonId, testId).getOrNull()
-                // #region agent log
-                AgentDebugLog.log(
-                    hypothesisId = "A",
-                    location = "LessonRepositoryImpl.getTestById",
-                    message = "remote test fallback",
-                    data = mapOf(
-                        "testId" to testId,
-                        "remoteQuestionsIdsSize" to (remoteTest?.questionsIds?.size ?: -1)
-                    )
-                )
-                // #endregion
                 if (remoteTest != null && remoteTest.questionsIds.isNotEmpty()) {
                     localDataSource.updateTestQuestionsIds(testId, lessonId, remoteTest.questionsIds)
                     test = test.copy(questionsIds = remoteTest.questionsIds)
@@ -147,26 +123,10 @@ class LessonRepositoryImpl @Inject constructor(
         return try {
             if (localDataSource.hasQuestion(questionId)) {
                 val localQuestion = localDataSource.getQuestionById(questionId)
-                // #region agent log
-                AgentDebugLog.log(
-                    hypothesisId = "C",
-                    location = "LessonRepositoryImpl.getQuestionById",
-                    message = "question from local cache",
-                    data = mapOf("questionId" to questionId, "optionsCount" to localQuestion.options.size)
-                )
-                // #endregion
                 return Result.success(localQuestion)
             }
 
             val remoteQuestion = questionRemoteDataSource.getQuestionById(questionId).getOrElse { error ->
-                // #region agent log
-                AgentDebugLog.log(
-                    hypothesisId = "C",
-                    location = "LessonRepositoryImpl.getQuestionById",
-                    message = "remote question failed",
-                    data = mapOf("questionId" to questionId, "error" to (error.message ?: "unknown"))
-                )
-                // #endregion
                 return Result.failure(error)
             }
 
@@ -176,18 +136,6 @@ class LessonRepositoryImpl @Inject constructor(
                 remoteQuestion
             }
             localDataSource.upsertQuestion(questionToCache)
-            // #region agent log
-            AgentDebugLog.log(
-                hypothesisId = "C",
-                location = "LessonRepositoryImpl.getQuestionById",
-                message = "question fetched from firestore",
-                data = mapOf(
-                    "questionId" to questionId,
-                    "testId" to remoteQuestion.testId,
-                    "optionsCount" to remoteQuestion.options.size
-                )
-            )
-            // #endregion
             Result.success(questionToCache)
         } catch (e: Exception) {
             Result.failure(Exception("Failed to load question: ${e.message}"))
