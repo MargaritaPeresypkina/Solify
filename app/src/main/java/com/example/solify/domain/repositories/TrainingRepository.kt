@@ -16,5 +16,7 @@ interface TrainingRepository {
 
     suspend fun getExerciseById(exerciseId: String): Result<Exercise>
 
+    suspend fun getExercisesForTrainer(trainerId: String): Result<Pair<String, List<Exercise>>>
+
     suspend fun playAudio(audioUrl: String): Result<Unit>
 }
