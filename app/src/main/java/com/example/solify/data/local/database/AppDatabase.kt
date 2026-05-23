@@ -10,6 +10,7 @@ import com.example.solify.data.local.dao.ProgressDao
 import com.example.solify.data.local.dao.TrainingDao
 import com.example.solify.data.local.dao.UserDao
 import com.example.solify.data.local.db_models.AnswerOptionDbModel
+import com.example.solify.data.local.db_models.ExerciseProgressDbModel
 import com.example.solify.data.local.db_models.ExerciseAnswerOptionDbModel
 import com.example.solify.data.local.db_models.ExerciseDbModel
 import com.example.solify.data.local.db_models.LessonDbModel
@@ -31,6 +32,7 @@ import com.example.solify.data.local.db_models.UserProgressDbModel
         UserProgressDbModel::class,
         LessonProgressDbModel::class,
         TestProgressDbModel::class,
+        ExerciseProgressDbModel::class,
         // Lessons
         LessonDbModel::class,
         TheoryItemDbModel::class,
@@ -44,7 +46,7 @@ import com.example.solify.data.local.db_models.UserProgressDbModel
         ExerciseDbModel::class,
         ExerciseAnswerOptionDbModel::class
     ],
-    version = 15,
+    version = 16,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

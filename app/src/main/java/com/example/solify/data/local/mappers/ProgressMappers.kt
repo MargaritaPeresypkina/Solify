@@ -1,10 +1,13 @@
 package com.example.solify.data.local.mappers
 
+import com.example.solify.data.local.db_models.ExerciseProgressDbModel
 import com.example.solify.data.local.db_models.LessonProgressDbModel
 import com.example.solify.data.local.db_models.TestProgressDbModel
 import com.example.solify.data.local.models.TestProgressWithLessonDbModel
 import com.example.solify.data.local.db_models.UserProgressDbModel
+import com.example.solify.data.remote.firebase.dto.ExerciseProgressDto
 import com.example.solify.data.remote.firebase.dto.TestProgressDto
+import com.example.solify.domain.entities.progress.ExerciseProgress
 import com.example.solify.domain.entities.progress.LessonProgress
 import com.example.solify.domain.entities.progress.Status
 import com.example.solify.domain.entities.progress.TestProgress
@@ -62,6 +65,43 @@ fun TestProgress.toDto(): TestProgressDto =
         testId = testId,
         completedQuestions = completedQuestions.toList(),
         pendingQuestions = pendingQuestions,
+        status = status.toStorageString()
+    )
+
+fun ExerciseProgressDbModel.toDomain(): ExerciseProgress {
+    return ExerciseProgress(
+        trainerId = trainerId,
+        completedExercises = completedExercises.toSet(),
+        pendingExercises = pendingExercises.toList(),
+        status = status.toProgressStatus()
+    ).withDerivedStatus()
+}
+
+fun ExerciseProgress.toDbModel(userId: String, existingId: Long = 0): ExerciseProgressDbModel {
+    val normalized = withDerivedStatus()
+    return ExerciseProgressDbModel(
+        id = existingId,
+        userId = userId,
+        trainerId = normalized.trainerId,
+        completedExercises = normalized.completedExercises.toList(),
+        pendingExercises = normalized.pendingExercises,
+        status = normalized.status.toStorageString()
+    )
+}
+
+fun ExerciseProgressDto.toDomain(): ExerciseProgress =
+    ExerciseProgress(
+        trainerId = trainerId,
+        completedExercises = completedExercises.toSet(),
+        pendingExercises = pendingExercises,
+        status = status.toProgressStatus()
+    ).withDerivedStatus()
+
+fun ExerciseProgress.toDto(): ExerciseProgressDto =
+    ExerciseProgressDto(
+        trainerId = trainerId,
+        completedExercises = completedExercises.toList(),
+        pendingExercises = pendingExercises,
         status = status.toStorageString()
     )
 

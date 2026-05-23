@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import com.example.solify.data.local.db_models.ExerciseProgressDbModel
 import com.example.solify.data.local.db_models.LessonProgressDbModel
 import com.example.solify.data.local.db_models.TestProgressDbModel
 import com.example.solify.data.local.db_models.UserProgressDbModel
@@ -23,6 +24,9 @@ interface ProgressDao {
 
     @Query("SELECT * FROM test_progress WHERE userId = :userId AND testId = :testId")
     fun getTestProgress(userId: String, testId: String): Flow<TestProgressDbModel?>
+
+    @Query("SELECT * FROM exercise_progress WHERE userId = :userId AND trainerId = :trainerId")
+    fun getExerciseProgress(userId: String, trainerId: String): Flow<ExerciseProgressDbModel?>
 
     @Query("SELECT * FROM lesson_progress WHERE userId = :userId")
     fun getAllLessonsProgress(userId: String): Flow<List<LessonProgressDbModel>>
@@ -76,6 +80,9 @@ interface ProgressDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOrUpdateTestProgress(progress: TestProgressDbModel)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertOrUpdateExerciseProgress(progress: ExerciseProgressDbModel)
+
     // Update
 
     @Query("""
@@ -122,4 +129,7 @@ interface ProgressDao {
 
     @Query("DELETE FROM test_progress WHERE userId = :userId AND testId = :testId")
     suspend fun resetTestProgress(userId: String, testId: String)
+
+    @Query("DELETE FROM exercise_progress WHERE userId = :userId AND trainerId = :trainerId")
+    suspend fun resetExerciseProgress(userId: String, trainerId: String)
 }

@@ -1,6 +1,7 @@
 package com.example.solify.data.remote.firebase.data_source
 
 import android.util.Log
+import com.example.solify.data.remote.firebase.dto.ExerciseProgressDto
 import com.example.solify.data.remote.firebase.dto.LessonProgressDto
 import com.example.solify.data.remote.firebase.dto.TestProgressDto
 import com.google.firebase.firestore.FirebaseFirestore
@@ -188,6 +189,72 @@ class ProgressRemoteDataSource @Inject constructor(
                 Log.e("ProgressRemote", "Error updating test progress", e)
                 Result.failure(e)
             }
+        }
+    }
+
+    suspend fun getExerciseProgress(userId: String, trainerId: String): Result<ExerciseProgressDto> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val document = firestore
+                    .collection("users")
+                    .document(userId)
+                    .collection("exercise_progress")
+                    .document(trainerId)
+                    .get()
+                    .await()
+
+                val data = document.data
+                if (data != null) {
+                    Result.success(
+                        ExerciseProgressDto(
+                            trainerId = document.id,
+                            completedExercises = readStringList(data, "completedExercises"),
+                            pendingExercises = readStringList(data, "pendingExercises"),
+                            status = readExerciseStatus(data)
+                        )
+                    )
+                } else {
+                    Result.success(ExerciseProgressDto(trainerId = trainerId))
+                }
+            } catch (e: Exception) {
+                Log.e("ProgressRemote", "Error loading exercise progress", e)
+                Result.failure(e)
+            }
+        }
+    }
+
+    suspend fun updateExerciseProgress(userId: String, progress: ExerciseProgressDto): Result<Unit> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val data = hashMapOf(
+                    "completedExercises" to progress.completedExercises,
+                    "pendingExercises" to progress.pendingExercises,
+                    "status" to progress.status
+                )
+                firestore
+                    .collection("users")
+                    .document(userId)
+                    .collection("exercise_progress")
+                    .document(progress.trainerId)
+                    .set(data)
+                    .await()
+                Result.success(Unit)
+            } catch (e: Exception) {
+                Log.e("ProgressRemote", "Error updating exercise progress", e)
+                Result.failure(e)
+            }
+        }
+    }
+
+    private fun readExerciseStatus(data: Map<String, Any>): String {
+        val raw = data["status"] as? String
+        if (!raw.isNullOrBlank()) return raw
+        val completed = readStringList(data, "completedExercises")
+        val pending = readStringList(data, "pendingExercises")
+        return when {
+            completed.isNotEmpty() && pending.isEmpty() -> "COMPLETED"
+            completed.isNotEmpty() || pending.isNotEmpty() -> "IN_PROGRESS"
+            else -> "NOT_STARTED"
         }
     }
 }
