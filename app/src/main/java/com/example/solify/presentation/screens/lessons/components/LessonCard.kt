@@ -120,7 +120,7 @@ fun LessonCard(
                 Icon(
                     painter = painterResource(id = R.drawable.play),
                     contentDescription = stringResource(R.string.go_to_lesson),
-                    modifier = Modifier.size(10.5.dp),
+                    modifier = Modifier.width(10.5.dp).height(13.5.dp),
                     tint = White300
                 )
             }
