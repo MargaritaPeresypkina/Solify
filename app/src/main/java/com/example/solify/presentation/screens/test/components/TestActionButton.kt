@@ -14,7 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.example.solify.presentation.ui.theme.LightYellow200
+import com.example.solify.presentation.ui.theme.LightYellow300
 
 @Composable
 fun TestActionButton(
@@ -42,7 +42,7 @@ fun TestActionButton(
         Text(
             text = text,
             style = MaterialTheme.typography.titleMedium,
-            color = LightYellow200
+            color = LightYellow300
         )
     }
 }

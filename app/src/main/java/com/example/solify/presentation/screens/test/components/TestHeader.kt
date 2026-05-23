@@ -25,7 +25,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.solify.R
-import com.example.solify.presentation.ui.theme.LightYellow200
+import com.example.solify.presentation.ui.theme.LightYellow300
 
 @Composable
 fun TestHeader(
@@ -71,7 +71,7 @@ fun TestHeader(
             Text(
                 text = title.uppercase(),
                 style = MaterialTheme.typography.displaySmall,
-                color = LightYellow200,
+                color = LightYellow300,
                 textAlign = TextAlign.Center,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,

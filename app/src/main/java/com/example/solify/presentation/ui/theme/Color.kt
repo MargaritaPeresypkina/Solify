@@ -12,8 +12,9 @@ val Brown300 = Color(0xFF2B2118)
 val Ocher100 = Color(0x33C29979) //20
 val Ocher200 = Color(0xFFC29979)
 
-val LightYellow100 = Color(0x66F7F3E3) //40
-val LightYellow200 = Color(0xFFF7F3E3)
+val LightYellow100 = Color(0x33F7F3E3) //20
+val LightYellow200 = Color(0x66F7F3E3) //40
+val LightYellow300 = Color(0xFFF7F3E3)
 
 val Yellow100 = Color(0x33F7D685) //20
 val Yellow200 = Color(0xFFF7D685)

@@ -11,7 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.example.solify.presentation.ui.theme.LightYellow200
+import com.example.solify.presentation.ui.theme.LightYellow300
 
 @Composable
 fun CustomButton(
@@ -32,7 +32,7 @@ fun CustomButton(
     ) {
         Text(
             text = buttonName,
-            color = LightYellow200,
+            color = LightYellow300,
             style = MaterialTheme.typography.titleMedium
         )
     }

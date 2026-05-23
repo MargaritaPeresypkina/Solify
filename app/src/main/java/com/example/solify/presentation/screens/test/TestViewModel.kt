@@ -271,7 +271,7 @@ enum class AnswerPhase {
 enum class TestAction(val label: String) {
     CHECK("Check"),
     NEXT("Next"),
-    COMPLETE("Complete the test")
+    COMPLETE("Complete")
 }
 
 enum class AnswerOptionVisualState {

@@ -20,7 +20,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.solify.presentation.screens.test.AnswerOptionVisualState
 import com.example.solify.presentation.ui.theme.Green100
-import com.example.solify.presentation.ui.theme.LightYellow200
+import com.example.solify.presentation.ui.theme.LightYellow300
 import com.example.solify.presentation.ui.theme.Red200
 
 @Composable
@@ -46,20 +46,20 @@ fun TestAnswerOption(
         AnswerOptionVisualState.SELECTED -> {
             backgroundColor = MaterialTheme.colorScheme.secondary
             borderColor = null
-            textColor = LightYellow200
+            textColor = LightYellow300
         }
 
         AnswerOptionVisualState.CORRECT,
         AnswerOptionVisualState.CORRECT_REVEALED -> {
             backgroundColor = Green100
             borderColor = null
-            textColor = LightYellow200
+            textColor = LightYellow300
         }
 
         AnswerOptionVisualState.INCORRECT -> {
             backgroundColor = Red200
             borderColor = null
-            textColor = LightYellow200
+            textColor = LightYellow300
         }
     }
 

@@ -36,7 +36,7 @@ import com.example.solify.presentation.screens.test.components.TestActionButton
 import com.example.solify.presentation.screens.test.components.TestAnswerOption
 import com.example.solify.presentation.screens.test.components.TestHeader
 import com.example.solify.presentation.screens.test.components.TestHintOverlay
-import com.example.solify.presentation.ui.theme.LightYellow200
+import com.example.solify.presentation.ui.theme.LightYellow300
 
 @Composable
 fun TestScreen(
@@ -68,7 +68,7 @@ fun TestScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(LightYellow200)
+                    .background(LightYellow300)
                     .padding(top = innerPadding.calculateTopPadding(), bottom = 22.dp)
             ) {
             when {
