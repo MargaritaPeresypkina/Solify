@@ -21,7 +21,7 @@ interface TrainingDao {
     @Query("SELECT * FROM trainings WHERE id = :trainingId")
     suspend fun getTrainingById(trainingId: String): TrainingDbModel?
 
-    @Query("SELECT * FROM trainers WHERE trainingId = :trainingId ORDER BY id")
+    @Query("SELECT * FROM trainers WHERE trainingId = :trainingId ORDER BY `order` ASC")
     suspend fun getTrainersByTraining(trainingId: String): List<TrainerDbModel>
 
     @Query("SELECT * FROM trainers WHERE id = :trainerId")

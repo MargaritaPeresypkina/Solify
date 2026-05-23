@@ -4,5 +4,6 @@ data class Trainer(
     val id: String,
     val description: String,
     val title: String,
-    val exercisesIds: List<String>
+    val exercisesIds: List<String>,
+    val order: Int = 0
 )

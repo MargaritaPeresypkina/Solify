@@ -55,7 +55,8 @@ fun Trainer.toDbModel(trainingId: String): TrainerDbModel {
         trainingId = trainingId,
         title = title,
         description = description,
-        exercisesIds = exercisesIds
+        exercisesIds = exercisesIds,
+        order = order
     )
 }
 
@@ -64,7 +65,8 @@ fun TrainerDbModel.toDomain(): Trainer {
         id = id,
         description = description,
         title = title,
-        exercisesIds = exercisesIds
+        exercisesIds = exercisesIds,
+        order = order
     )
 }
 
@@ -85,6 +87,6 @@ fun TrainingWithTrainers.toDomain(): Training {
         description = training.description,
         imageUrl = training.imageUrl,
         category = TrainingCategory.valueOf(training.category),
-        trainers = trainers.map { it.toDomain() }
+        trainers = trainers.map { it.toDomain() }.sortedBy { it.order }
     )
 }

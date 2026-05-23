@@ -23,5 +23,6 @@ data class TrainerDbModel(
     val trainingId: String,
     val title: String,
     val description: String,
-    val exercisesIds: List<String> = emptyList()
+    val exercisesIds: List<String> = emptyList(),
+    val order: Int = 0
 )

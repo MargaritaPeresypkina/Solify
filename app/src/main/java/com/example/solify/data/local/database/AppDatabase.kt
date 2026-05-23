@@ -44,7 +44,7 @@ import com.example.solify.data.local.db_models.UserProgressDbModel
         ExerciseDbModel::class,
         ExerciseAnswerOptionDbModel::class
     ],
-    version = 13,
+    version = 15,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

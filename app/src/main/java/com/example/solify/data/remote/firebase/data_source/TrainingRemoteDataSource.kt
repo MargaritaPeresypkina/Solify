@@ -44,9 +44,15 @@ class TrainingRemoteDataSource @Inject constructor(
             val exercisesIds = (document.get("exercisesIds") as? List<*>)
                 ?.filterIsInstance<String>()
                 .orEmpty()
-            document.toObject(TrainerDto::class.java)
-                ?.copy(id = document.id, exercisesIds = exercisesIds)
-                ?.toDomain()
-        }
+            val dto = document.toObject(TrainerDto::class.java) ?: return@mapNotNull null
+            val order = document.getLong("order")?.toInt()
+                ?: (document.get("order") as? Number)?.toInt()
+                ?: dto.order
+            dto.copy(
+                id = document.id,
+                exercisesIds = exercisesIds,
+                order = order
+            ).toDomain()
+        }.sortedBy { it.order }
     }
 }

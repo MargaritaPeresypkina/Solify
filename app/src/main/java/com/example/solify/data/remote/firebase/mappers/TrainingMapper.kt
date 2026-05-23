@@ -35,7 +35,8 @@ fun TrainerDto.toDomain(): Trainer {
         id = id,
         description = description,
         title = title,
-        exercisesIds = exercisesIds
+        exercisesIds = exercisesIds,
+        order = order
     )
 }
 
@@ -45,7 +46,8 @@ fun Trainer.toDbModel(trainingId: String): TrainerDbModel {
         trainingId = trainingId,
         title = title,
         description = description,
-        exercisesIds = exercisesIds
+        exercisesIds = exercisesIds,
+        order = order
     )
 }
 
