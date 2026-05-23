@@ -6,21 +6,22 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 
 @Entity(
-    tableName = "exercise_answer_options",
+    tableName = "trainers",
     foreignKeys = [ForeignKey(
-        entity = ExerciseDbModel::class,
+        entity = TrainingDbModel::class,
         parentColumns = ["id"],
-        childColumns = ["exerciseId"],
+        childColumns = ["trainingId"],
         onDelete = ForeignKey.CASCADE
     )],
     indices = [
-        Index(value = ["exerciseId"])
+        Index(value = ["trainingId"])
     ]
 )
-data class ExerciseAnswerOptionDbModel(
+data class TrainerDbModel(
     @PrimaryKey
     val id: String,
-    val exerciseId: String,
-    val text: String?,
-    val image: String?
+    val trainingId: String,
+    val title: String,
+    val description: String,
+    val exercisesIds: List<String> = emptyList()
 )

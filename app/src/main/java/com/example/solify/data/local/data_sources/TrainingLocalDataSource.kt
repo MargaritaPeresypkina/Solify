@@ -4,7 +4,7 @@ import com.example.solify.data.local.dao.TrainingDao
 import com.example.solify.data.local.db_models.TrainingDbModel
 import com.example.solify.data.local.mappers.toDomain
 import com.example.solify.data.local.models.ExerciseWithOptions
-import com.example.solify.data.local.models.TrainingWithExercises
+import com.example.solify.data.local.models.TrainingWithTrainers
 import com.example.solify.domain.entities.training.Exercise
 import com.example.solify.domain.entities.training.Training
 import kotlinx.coroutines.flow.Flow
@@ -53,7 +53,6 @@ class TrainingLocalDataSource @Inject constructor(
         }
     }
 
-
     suspend fun getExerciseById(exerciseId: String): Exercise {
         return try {
             val exerciseDb = trainingDao.getExerciseById(exerciseId)
@@ -68,19 +67,11 @@ class TrainingLocalDataSource @Inject constructor(
         }
     }
 
-
     private suspend fun convertToDomain(trainingDb: TrainingDbModel): Training {
-        val exercisesDb = trainingDao.getExercisesByTraining(trainingDb.id)
-        val exercisesWithOptions = exercisesDb.map { exerciseDb ->
-            val options = trainingDao.getAnswerOptionsByExercise(exerciseDb.id)
-            ExerciseWithOptions(exercise = exerciseDb, options = options)
-        }
-
-        val trainingData = TrainingWithExercises(
+        val trainersDb = trainingDao.getTrainersByTraining(trainingDb.id)
+        return TrainingWithTrainers(
             training = trainingDb,
-            exercises = exercisesWithOptions
-        )
-
-        return trainingData.toDomain()
+            trainers = trainersDb
+        ).toDomain()
     }
 }

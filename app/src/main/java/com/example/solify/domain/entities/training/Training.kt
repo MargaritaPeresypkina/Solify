@@ -6,6 +6,6 @@ data class Training(
     val description: String,
     val imageUrl: String?,
     val category: TrainingCategory,
-    val exercises: List<Exercise>
+    val trainers: List<Trainer>
 )
 enum class TrainingCategory { EAR, RHYTHM }
