@@ -13,7 +13,7 @@ import androidx.compose.ui.platform.LocalContext
 private val DarkColorScheme = darkColorScheme(
     primary = Brown300,
     onPrimary = LightYellow300,
-    primaryContainer = Ocher200,
+    primaryContainer = Orange100,
     onPrimaryContainer = Brown300,
     secondary = Scarlet200,
     onSecondary = LightYellow300,

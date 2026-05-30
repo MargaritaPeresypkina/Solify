@@ -67,7 +67,7 @@ fun ExerciseScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(LightYellow300)
+                    .background(MaterialTheme.colorScheme.background)
                     .padding(top = innerPadding.calculateTopPadding(), bottom = 22.dp)
             ) {
                 when {

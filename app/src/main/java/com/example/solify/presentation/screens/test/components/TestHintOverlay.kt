@@ -62,7 +62,7 @@ fun TestHintOverlay(
                 .fillMaxWidth()
                 .height(424.dp)
                 .clip(RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp))
-                .background(White300)
+                .background(MaterialTheme.colorScheme.primary)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
@@ -77,7 +77,7 @@ fun TestHintOverlay(
                     .padding(top = 25.dp, start = 22.dp)
                     .width(31.dp)
                     .height(32.5.dp),
-                tint = Color.Unspecified
+                tint = MaterialTheme.colorScheme.onPrimary
             )
 
             Column(
