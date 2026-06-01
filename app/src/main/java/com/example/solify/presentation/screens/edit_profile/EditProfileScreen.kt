@@ -21,7 +21,7 @@ import androidx.compose.material.icons.outlined.PersonOutline
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
+import com.example.solify.presentation.components.skeleton.EditProfileScreenSkeleton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -111,12 +111,7 @@ fun EditProfileScreen(
                 .padding(top = 20.dp)
         ) {
             if (uiState.isLoading && uiState.originalUser == null) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
+                EditProfileScreenSkeleton(modifier = Modifier.fillMaxSize())
                 return@Scaffold
             }
 

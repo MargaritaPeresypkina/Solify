@@ -11,7 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.CircularProgressIndicator
+import com.example.solify.presentation.components.skeleton.QuizScreenSkeleton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -73,12 +73,10 @@ fun ExerciseScreen(
             ) {
                 when {
                     uiState.isLoading -> {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator(color = MaterialTheme.colorScheme.secondary)
-                        }
+                        QuizScreenSkeleton(
+                            onCloseClick = onNavigateBack,
+                            modifier = Modifier.fillMaxSize()
+                        )
                     }
 
                     else -> {

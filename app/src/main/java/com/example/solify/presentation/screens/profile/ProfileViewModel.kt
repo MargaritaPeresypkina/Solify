@@ -47,17 +47,18 @@ class ProfileViewModel @Inject constructor(
                         it.copy(
                             user = null,
                             isLoading = false,
+                            isProfileReady = false,
                             isLoggedOut = true
                         )
                     }
-                } else {
+                } else if (user != null) {
                     _uiState.update {
                         it.copy(
                             user = user,
-                            isLoading = false
+                            isProfileReady = false
                         )
                     }
-                    user?.let { refreshBadge(it.id) }
+                    refreshBadge(user.id)
                 }
             }
 
@@ -70,7 +71,9 @@ class ProfileViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         userBadgeRes = result.badgeRes,
-                        userLevel = result.levelName
+                        userLevel = result.levelName,
+                        isProfileReady = true,
+                        isLoading = false
                     )
                 }
             }
@@ -135,7 +138,8 @@ class ProfileViewModel @Inject constructor(
 data class ProfileUiState(
     val user: User? = null,
     val avatarImage: String? = null,
-    val isLoading: Boolean = false,
+    val isLoading: Boolean = true,
+    val isProfileReady: Boolean = false,
     val error: String? = null,
     val isLoggedOut: Boolean = false,
     val userBadgeRes: Int = R.drawable.none_medal,

@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
+import com.example.solify.presentation.components.skeleton.TrainingsListSkeleton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -60,23 +60,9 @@ fun TrainingScreen(
                 .padding(top = innerPadding.calculateTopPadding())
                 .padding(top = 20.dp)
         ) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                LessonsHeader(
-                    avatarUrl = uiState.userAvatarUrl,
-                    badgeRes = uiState.userBadgeRes,
-                    level = uiState.userLevel,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(Modifier.height(20.dp))
-
-                when {
-                    uiState.isLoading && !uiState.hasLoadedOnce -> {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator()
-                        }
+            when {
+                    shouldShowTrainingsSkeleton(uiState) -> {
+                        TrainingsListSkeleton(modifier = Modifier.fillMaxSize())
                     }
 
                     uiState.error != null && !hasAnyTrainings(uiState) -> {
@@ -92,6 +78,14 @@ fun TrainingScreen(
                     }
 
                     else -> {
+                        Column(modifier = Modifier.fillMaxSize()) {
+                        LessonsHeader(
+                            avatarUrl = uiState.userAvatarUrl,
+                            badgeRes = uiState.userBadgeRes,
+                            level = uiState.userLevel,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(Modifier.height(20.dp))
                         LazyColumn(
                             modifier = Modifier
                                 .fillMaxSize()
@@ -126,13 +120,18 @@ fun TrainingScreen(
                                 Spacer(modifier = Modifier.height(24.dp))
                             }
                         }
+                        }
                     }
                 }
-            }
         }
     }
 }
 
 private fun hasAnyTrainings(uiState: TrainingsUiState): Boolean {
     return uiState.earTrainings.isNotEmpty() || uiState.rhythmTrainings.isNotEmpty()
+}
+
+private fun shouldShowTrainingsSkeleton(uiState: TrainingsUiState): Boolean {
+    if (uiState.error != null && !uiState.hasLoadedOnce) return false
+    return !uiState.hasLoadedOnce || !uiState.isHeaderReady
 }

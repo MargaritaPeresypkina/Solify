@@ -96,7 +96,8 @@ class LessonsViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         userBadgeRes = result.badgeRes,
-                        userLevel = result.levelName
+                        userLevel = result.levelName,
+                        isHeaderReady = true
                     )
                 }
             }
@@ -149,6 +150,7 @@ data class LessonsUiState(
     val isLoading: Boolean = true,
     val isRefreshing: Boolean = false,
     val hasLoadedOnce: Boolean = false,
+    val isHeaderReady: Boolean = false,
     val error: String? = null,
     val beginnerLessons: List<LessonItemUi> = emptyList(),
     val intermediateLessons: List<LessonItemUi> = emptyList(),

@@ -81,7 +81,8 @@ class TrainingViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         userBadgeRes = result.badgeRes,
-                        userLevel = result.levelName
+                        userLevel = result.levelName,
+                        isHeaderReady = true
                     )
                 }
             }
@@ -123,6 +124,7 @@ class TrainingViewModel @Inject constructor(
 data class TrainingsUiState(
     val isLoading: Boolean = true,
     val hasLoadedOnce: Boolean = false,
+    val isHeaderReady: Boolean = false,
     val error: String? = null,
     val earTrainings: List<TrainingItemUi> = emptyList(),
     val rhythmTrainings: List<TrainingItemUi> = emptyList(),

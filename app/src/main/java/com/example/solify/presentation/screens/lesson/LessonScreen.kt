@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
+import com.example.solify.presentation.components.skeleton.LessonDetailSkeleton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -21,9 +21,9 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -73,23 +73,12 @@ fun LessonScreen(
                 .padding(top = innerPadding.calculateTopPadding())
                 .padding(top = 20.dp)
         ) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                LessonHeader(
-                    title = uiState.lessonTitle.ifEmpty { lessonId },
-                    onBackClick = onNavigateBack,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(Modifier.height(24.dp))
-
-                when {
-                    uiState.isLoading && !uiState.hasLoadedOnce -> {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator()
-                        }
+            when {
+                    shouldShowLessonSkeleton(uiState) -> {
+                        LessonDetailSkeleton(
+                            onBackClick = onNavigateBack,
+                            modifier = Modifier.fillMaxSize()
+                        )
                     }
 
                     uiState.error != null && !uiState.hasLoadedOnce -> {
@@ -105,6 +94,13 @@ fun LessonScreen(
                     }
 
                     else -> {
+                        Column(modifier = Modifier.fillMaxSize()) {
+                        LessonHeader(
+                            title = uiState.lessonTitle,
+                            onBackClick = onNavigateBack,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(Modifier.height(24.dp))
                         LazyColumn(
                             modifier = Modifier
                                 .fillMaxSize()
@@ -139,9 +135,14 @@ fun LessonScreen(
                                 Spacer(modifier = Modifier.padding(bottom = 24.dp))
                             }
                         }
+                        }
                     }
                 }
-            }
         }
     }
+}
+
+private fun shouldShowLessonSkeleton(uiState: com.example.solify.presentation.screens.lesson.LessonUiState): Boolean {
+    if (uiState.error != null && !uiState.hasLoadedOnce) return false
+    return uiState.isLoading && !uiState.hasLoadedOnce
 }

@@ -24,7 +24,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.PersonOutline
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
+import com.example.solify.presentation.components.skeleton.ProfileScreenSkeleton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -60,12 +60,21 @@ fun ProfileScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val user = uiState.user
 
-    if (uiState.isLoading && user == null) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            CircularProgressIndicator()
+    if (user == null || !uiState.isProfileReady) {
+        Scaffold(
+            bottomBar = {
+                BottomNavigationBar(navController = navController)
+            }
+        ) { innerPadding ->
+            Box(
+                modifier = modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.primaryContainer)
+                    .padding(top = innerPadding.calculateTopPadding())
+                    .padding(top = 20.dp)
+            ) {
+                ProfileScreenSkeleton(modifier = Modifier.fillMaxSize())
+            }
         }
         return
     }
@@ -139,7 +148,7 @@ fun ProfileScreen(
                         ) {
 
                             AvatarImage(
-                                imageUrl = user?.avatarUrl,
+                                imageUrl = user.avatarUrl,
                                 onClick = {
                                     imagePicker.launch("image/*")
                                 },
@@ -177,7 +186,7 @@ fun ProfileScreen(
                         ) {
                             Spacer(Modifier.height((avatarSize/2 + 18).dp))
                             Text(
-                                "${user?.surname} ${user?.name}",
+                                "${user.surname} ${user.name}",
                                 color = MaterialTheme.colorScheme.onPrimary,
                                 style = MaterialTheme.typography.titleMedium
                             )
