@@ -73,12 +73,13 @@ fun TestHeader(
                 style = MaterialTheme.typography.displaySmall,
                 color = LightYellow300,
                 textAlign = TextAlign.Center,
-                maxLines = 2,
+                maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier
                     .clip(RoundedCornerShape(12.dp))
                     .background(MaterialTheme.colorScheme.secondary)
                     .padding(horizontal = 32.dp, vertical = 3.dp)
+                    .width(200.dp)
             )
             Spacer(Modifier.height(11.dp))
             TestProgressBar(

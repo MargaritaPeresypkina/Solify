@@ -36,7 +36,9 @@ import com.example.solify.presentation.screens.test.components.TestActionButton
 import com.example.solify.presentation.screens.test.components.TestAnswerOption
 import com.example.solify.presentation.screens.test.components.TestHeader
 import com.example.solify.presentation.screens.test.components.TestHintOverlay
-import com.example.solify.presentation.ui.theme.LightYellow300
+import com.example.solify.presentation.screens.test.components.TestShuffleButton
+import androidx.compose.ui.res.stringResource
+import com.example.solify.R
 
 @Composable
 fun TestScreen(
@@ -70,6 +72,7 @@ fun TestScreen(
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.background)
                     .padding(top = innerPadding.calculateTopPadding(), bottom = 22.dp)
+                    .padding(top = 20.dp)
             ) {
             when {
                 uiState.isLoading -> {
@@ -81,8 +84,49 @@ fun TestScreen(
                     }
                 }
 
-                else -> {
+                uiState.isStartScreenVisible -> {
                     Column(modifier = Modifier.fillMaxSize()) {
+                        TestHeader(
+                            title = uiState.testTitle,
+                            progress = 0f,
+                            onCloseClick = onNavigateBack,
+                            onHintClick = {}
+                        )
+
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(horizontal = 24.dp),
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = uiState.testTitle,
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+
+                        Box(
+                            modifier = Modifier.fillMaxWidth(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            TestActionButton(
+                                text = stringResource(R.string.test_start),
+                                enabled = true,
+                                containerColor = MaterialTheme.colorScheme.secondary,
+                                onClick = viewModel::onStartTestClick
+                            )
+                        }
+                    }
+                }
+
+                else -> {
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
                         TestHeader(
                             title = uiState.testTitle,
                             progress = uiState.progress,
@@ -90,11 +134,19 @@ fun TestScreen(
                             onHintClick = viewModel::onHintClick
                         )
 
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        TestShuffleButton(
+                            isActive = uiState.randomOrderEnabled,
+                            enabled = !uiState.isSubmitting && !uiState.isTestCompleted,
+                            onClick = viewModel::onShuffleClick
+                        )
+
                         Column(
                             modifier = Modifier
                                 .weight(1f)
                                 .verticalScroll(rememberScrollState())
-                                .padding(top = 40.dp)
+                                .padding(top = 24.dp)
                                 .padding(horizontal = 24.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {

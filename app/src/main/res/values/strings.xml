@@ -23,4 +23,7 @@
     <string name="go_to_lesson">Go to lesson</string>
     <string name="go_to_training">Go to training</string>
     <string name="exercises">Exercises</string>
+    <string name="test_random_order">Random question order</string>
+    <string name="test_shuffle_questions">Shuffle question order</string>
+    <string name="test_start">Start</string>
 </resources>

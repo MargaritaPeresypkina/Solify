@@ -8,6 +8,7 @@ import com.example.solify.domain.entities.lesson.Question
 import com.example.solify.domain.repositories.LessonRepository
 import com.example.solify.domain.repositories.ProgressRepository
 import com.example.solify.domain.usecases.tests.GetNextQuestionUseCase
+import com.example.solify.domain.usecases.tests.ShufflePendingQuestionsUseCase
 import com.example.solify.domain.usecases.tests.StartTestUseCase
 import com.example.solify.domain.usecases.tests.SubmitAnswerUseCase
 import com.example.solify.domain.usecases.user.ObserveCurrentUserUseCase
@@ -31,7 +32,8 @@ class TestViewModel @Inject constructor(
     private val progressRepository: ProgressRepository,
     private val startTestUseCase: StartTestUseCase,
     private val getNextQuestionUseCase: GetNextQuestionUseCase,
-    private val submitAnswerUseCase: SubmitAnswerUseCase
+    private val submitAnswerUseCase: SubmitAnswerUseCase,
+    private val shufflePendingQuestionsUseCase: ShufflePendingQuestionsUseCase
 ) : ViewModel() {
 
     private val lessonId: String = savedStateHandle.get<String>("lesson_id").orEmpty()
@@ -43,6 +45,7 @@ class TestViewModel @Inject constructor(
     private var currentUserId: String? = null
     private var currentQuestion: Question? = null
     private var totalQuestions: Int = 0
+    private var hasStartedObservingProgress = false
 
     init {
         observeCurrentUserUseCase()
@@ -51,13 +54,13 @@ class TestViewModel @Inject constructor(
             .onEach { user ->
                 currentUserId = user.id
                 if (!_uiState.value.hasInitialized) {
-                    initializeTest(user.id)
+                    prepareTest(user.id)
                 }
             }
             .launchIn(viewModelScope)
     }
 
-    private fun initializeTest(userId: String) {
+    private fun prepareTest(userId: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
 
@@ -71,14 +74,67 @@ class TestViewModel @Inject constructor(
             totalQuestions = test.questionsIds.size
             _uiState.update { it.copy(testTitle = test.title, totalQuestions = totalQuestions) }
 
-            startTestUseCase(userId, lessonId, testId).onFailure { error ->
-                _uiState.update { it.copy(isLoading = false, error = error.message) }
-                return@launch
-            }
+            val existingProgress = progressRepository.getCurrentTestProgress(userId, testId)
+            val hasResumableProgress = existingProgress != null &&
+                (existingProgress.pendingQuestions.isNotEmpty() || existingProgress.completedQuestions.isNotEmpty())
 
-            observeTestProgress(userId)
-            loadCurrentQuestion(userId)
+            if (hasResumableProgress) {
+                beginTest(userId)
+            } else {
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        isStartScreenVisible = true,
+                        hasInitialized = true
+                    )
+                }
+            }
         }
+    }
+
+    fun onStartTestClick() {
+        val userId = currentUserId ?: return
+        viewModelScope.launch {
+            _uiState.update { it.copy(isStartScreenVisible = false, isLoading = true) }
+            beginTest(userId)
+        }
+    }
+
+    fun onShuffleClick() {
+        val userId = currentUserId ?: return
+        val question = currentQuestion ?: return
+        if (_uiState.value.isSubmitting) return
+
+        viewModelScope.launch {
+            val enabled = !_uiState.value.randomOrderEnabled
+            shufflePendingQuestionsUseCase(
+                userId = userId,
+                lessonId = lessonId,
+                testId = testId,
+                enabled = enabled,
+                currentQuestionId = question.id
+            ).onSuccess {
+                _uiState.update { it.copy(randomOrderEnabled = enabled) }
+            }.onFailure { error ->
+                _uiState.update {
+                    it.copy(error = error.message ?: "Failed to shuffle questions")
+                }
+            }
+        }
+    }
+
+    private suspend fun beginTest(userId: String) {
+        startTestUseCase(userId, lessonId, testId).onFailure { error ->
+            _uiState.update { it.copy(isLoading = false, error = error.message) }
+            return
+        }
+
+        if (!hasStartedObservingProgress) {
+            observeTestProgress(userId)
+            hasStartedObservingProgress = true
+        }
+
+        loadCurrentQuestion(userId)
     }
 
     private fun observeTestProgress(userId: String) {
@@ -292,6 +348,8 @@ data class TestUiState(
     val isLoading: Boolean = true,
     val isSubmitting: Boolean = false,
     val hasInitialized: Boolean = false,
+    val isStartScreenVisible: Boolean = false,
+    val randomOrderEnabled: Boolean = false,
     val error: String? = null,
     val testTitle: String = "",
     val questionText: String = "",

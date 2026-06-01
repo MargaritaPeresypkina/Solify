@@ -12,7 +12,8 @@ class StartTestUseCase @Inject constructor(
     suspend operator fun invoke(
         userId: String,
         lessonId: String,
-        testId: String
+        testId: String,
+        shuffleQuestions: Boolean = false
     ): Result<Boolean> {
         return try {
             val test = lessonRepository.getTestById(testId, lessonId).getOrNull()
@@ -38,11 +39,16 @@ class StartTestUseCase @Inject constructor(
                 return Result.success(false)
             }
 
+            val questionOrder = test.questionsIds.toMutableList()
+            if (shuffleQuestions) {
+                questionOrder.shuffle()
+            }
+
             val initialProgress = TestProgress(
                 testId = testId,
                 lessonId = lessonId,
                 completedQuestions = emptySet(),
-                pendingQuestions = test.questionsIds.toMutableList()
+                pendingQuestions = questionOrder
             )
             progressRepository.saveTestProgress(userId, initialProgress)
 
