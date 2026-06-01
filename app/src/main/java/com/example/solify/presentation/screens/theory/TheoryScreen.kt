@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material3.CircularProgressIndicator
+import com.example.solify.presentation.components.skeleton.TheoryScreenSkeleton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -48,25 +48,12 @@ fun TheoryScreen(
                 .padding(top = innerPadding.calculateTopPadding())
                 .padding(top = 20.dp)
         ) {
-            Column(
-                modifier = modifier,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                TheoryHeader(
-                    title = uiState.title,
-                    onCloseClick = onNavigateBack
-                )
-                Spacer(Modifier.height(27.dp))
-                when {
+            when {
                     uiState.isLoading -> {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(top = innerPadding.calculateTopPadding()),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator()
-                        }
+                        TheoryScreenSkeleton(
+                            onCloseClick = onNavigateBack,
+                            modifier = Modifier.fillMaxSize()
+                        )
                     }
 
                     uiState.error != null -> {
@@ -84,6 +71,15 @@ fun TheoryScreen(
                     }
 
                     else -> {
+                        Column(
+                            modifier = modifier,
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                        TheoryHeader(
+                            title = uiState.title,
+                            onCloseClick = onNavigateBack
+                        )
+                        Spacer(Modifier.height(27.dp))
                         LazyColumn(
                             modifier = Modifier
                                 .fillMaxSize(),
@@ -105,9 +101,9 @@ fun TheoryScreen(
                                 }
                             }
                         }
+                        }
                     }
                 }
-            }
         }
     }
 }
