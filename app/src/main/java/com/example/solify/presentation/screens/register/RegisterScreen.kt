@@ -60,6 +60,7 @@ fun RegisterScreen(
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.primaryContainer)
                 .padding(top = innerPadding.calculateTopPadding())
+                .padding(top = 20.dp)
         ) {
             Column(
                 modifier = modifier,

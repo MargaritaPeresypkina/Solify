@@ -46,6 +46,7 @@ fun TheoryScreen(
                 .fillMaxSize()
                 .background(color = MaterialTheme.colorScheme.background)
                 .padding(top = innerPadding.calculateTopPadding())
+                .padding(top = 20.dp)
         ) {
             Column(
                 modifier = modifier,
