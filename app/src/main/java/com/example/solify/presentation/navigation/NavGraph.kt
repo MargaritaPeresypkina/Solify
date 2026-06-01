@@ -1,8 +1,6 @@
 package com.example.solify.presentation.navigation
 
 import android.os.Bundle
-import androidx.compose.animation.EnterTransition
-import androidx.compose.animation.ExitTransition
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -44,10 +42,10 @@ fun NavGraph(
     NavHost(
         navController = navController,
         startDestination = startDestination,
-        enterTransition = { EnterTransition.None },
-        exitTransition = { ExitTransition.None },
-        popEnterTransition = { EnterTransition.None },
-        popExitTransition = { ExitTransition.None }
+        enterTransition = { navEnterTransition() },
+        exitTransition = { navExitTransition() },
+        popEnterTransition = { navPopEnterTransition() },
+        popExitTransition = { navPopExitTransition() }
     ) {
 
         composable(Screen.AuthChoice.route) {
