@@ -46,7 +46,7 @@ fun TheoryScreen(
                 .fillMaxSize()
                 .background(color = MaterialTheme.colorScheme.background)
                 .padding(top = innerPadding.calculateTopPadding())
-                .padding(top = 20.dp)
+                .padding(top = 10.dp)
         ) {
             when {
                     uiState.isLoading -> {

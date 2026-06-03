@@ -72,7 +72,7 @@ fun TestScreen(
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.background)
                     .padding(top = innerPadding.calculateTopPadding(), bottom = 22.dp)
-                    .padding(top = 20.dp)
+                    .padding(top = 10.dp)
             ) {
             when {
                 uiState.isLoading -> {

@@ -107,7 +107,7 @@ fun ProfileScreen(
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.primaryContainer)
                 .padding(top = innerPadding.calculateTopPadding())
-                .padding(top = 20.dp),
+                .padding(top = 10.dp),
         ) {
             Column(
                 modifier = modifier.fillMaxSize().padding(top = 16.dp)
@@ -200,6 +200,12 @@ fun ProfileScreen(
                                         onEditProfile()
                                     },
                             )
+                            Spacer(Modifier.height(17.dp))
+                            WeeklyActivityChart(
+                                days = uiState.weeklyActivityDays,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            Spacer(Modifier.height(24.dp))
                         }
                     }
                 }

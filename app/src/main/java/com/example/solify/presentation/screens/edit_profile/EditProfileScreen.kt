@@ -108,7 +108,7 @@ fun EditProfileScreen(
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.primaryContainer)
                 .padding(top = innerPadding.calculateTopPadding())
-                .padding(top = 20.dp)
+                .padding(top = 10.dp)
         ) {
             if (uiState.isLoading && uiState.originalUser == null) {
                 EditProfileScreenSkeleton(modifier = Modifier.fillMaxSize())

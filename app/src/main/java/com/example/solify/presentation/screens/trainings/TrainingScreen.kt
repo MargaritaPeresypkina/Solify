@@ -58,7 +58,7 @@ fun TrainingScreen(
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.primaryContainer)
                 .padding(top = innerPadding.calculateTopPadding())
-                .padding(top = 20.dp)
+                .padding(top = 10.dp)
         ) {
             when {
                     shouldShowTrainingsSkeleton(uiState) -> {

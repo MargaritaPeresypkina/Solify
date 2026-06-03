@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.solify.R
 import com.example.solify.domain.entities.user.User
 import com.example.solify.domain.usecases.auth.LogoutUserUseCase
+import com.example.solify.domain.entities.progress.WeeklyActivityDay
+import com.example.solify.domain.usecases.progress.ObserveWeeklyActivityUseCase
 import com.example.solify.domain.usecases.user.GetUserBadgeUseCase
 import com.example.solify.domain.usecases.user.ObserveCurrentUserUseCase
 import com.example.solify.domain.usecases.user.UpdateUserAvatarUseCase
@@ -15,6 +17,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -26,7 +30,8 @@ class ProfileViewModel @Inject constructor(
     observeCurrentUserUseCase: ObserveCurrentUserUseCase,
     private val logoutUserUseCase: LogoutUserUseCase,
     private val updateUserAvatarUseCase: UpdateUserAvatarUseCase,
-    private val getUserBadgeUseCase: GetUserBadgeUseCase
+    private val getUserBadgeUseCase: GetUserBadgeUseCase,
+    private val observeWeeklyActivityUseCase: ObserveWeeklyActivityUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileUiState(isLoading = true))
@@ -39,7 +44,27 @@ class ProfileViewModel @Inject constructor(
             initialValue = null
         )
 
+    private val weeklyActivityFlow = userFlow
+        .flatMapLatest { user ->
+            if (user == null) {
+                emptyFlow()
+            } else {
+                observeWeeklyActivityUseCase(user.id)
+            }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
     init {
+        viewModelScope.launch {
+            weeklyActivityFlow.collect { days ->
+                _uiState.update { it.copy(weeklyActivityDays = days) }
+            }
+        }
+
         viewModelScope.launch {
             userFlow.collect { user ->
                 if (user == null && _uiState.value.user != null) {
@@ -143,7 +168,8 @@ data class ProfileUiState(
     val error: String? = null,
     val isLoggedOut: Boolean = false,
     val userBadgeRes: Int = R.drawable.none_medal,
-    val userLevel: String = "Let's try"
+    val userLevel: String = "Let's try",
+    val weeklyActivityDays: List<WeeklyActivityDay> = emptyList()
 )
 
 sealed class ProfileCommand {
