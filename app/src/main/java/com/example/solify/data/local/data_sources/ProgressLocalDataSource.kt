@@ -1,12 +1,14 @@
 package com.example.solify.data.local.data_sources
 
 import com.example.solify.data.local.dao.ProgressDao
+import com.example.solify.data.local.db_models.DailyActivityDbModel
 import com.example.solify.data.local.db_models.ExerciseProgressDbModel
 import com.example.solify.data.local.db_models.LessonProgressDbModel
 import com.example.solify.data.local.db_models.TestProgressDbModel
 import com.example.solify.data.local.db_models.UserProgressDbModel
 import com.example.solify.data.local.mappers.toDbModel
 import com.example.solify.data.local.mappers.toDomain
+import com.example.solify.domain.entities.progress.DailyActivity
 import com.example.solify.domain.entities.progress.ExerciseProgress
 import com.example.solify.domain.entities.progress.LessonProgress
 import com.example.solify.domain.entities.progress.TestProgress
@@ -112,6 +114,14 @@ class ProgressLocalDataSource @Inject constructor(
 
     suspend fun insertOrUpdateLessonProgress(userId: String, progress: LessonProgress) {
         try {
+            val userExists = progressDao.hasUser(userId)
+            val lessonExists = progressDao.hasLesson(progress.lessonId)
+            if (!userExists || !lessonExists) {
+                throw DataSourceException.DatabaseError(
+                    "FK parents missing: userExists=$userExists lessonExists=$lessonExists",
+                    IllegalStateException("FOREIGN KEY parents missing")
+                )
+            }
             val dbModel = LessonProgressDbModel(
                 userId = userId,
                 lessonId = progress.lessonId,
@@ -205,6 +215,51 @@ class ProgressLocalDataSource @Inject constructor(
         }
     }
 
+    fun observeDailyActivitySince(userId: String, sinceDate: String): Flow<List<DailyActivity>> =
+        progressDao.observeDailyActivitySince(userId, sinceDate).map { entries ->
+            entries.map { it.toDailyActivity() }
+        }
+
+    suspend fun getDailyActivitySince(userId: String, sinceDate: String): List<DailyActivity> =
+        progressDao.getDailyActivitySince(userId, sinceDate).map { it.toDailyActivity() }
+
+    suspend fun incrementDailyActivity(userId: String, date: String) {
+        try {
+            val userExists = progressDao.hasUser(userId)
+            if (!userExists) {
+                throw DataSourceException.DatabaseError(
+                    "FK user missing for daily_activity",
+                    IllegalStateException("user row missing")
+                )
+            }
+            val existing = progressDao.getDailyActivity(userId, date)
+            val updated = DailyActivityDbModel(
+                userId = userId,
+                date = date,
+                completedTestsCount = (existing?.completedTestsCount ?: 0) + 1
+            )
+            progressDao.insertOrUpdateDailyActivity(updated)
+        } catch (e: Exception) {
+            throw DataSourceException.DatabaseError("Failed to increment daily activity", e)
+        }
+    }
+
+    suspend fun insertOrUpdateDailyActivities(userId: String, activities: List<DailyActivity>) {
+        try {
+            activities.forEach { activity ->
+                progressDao.insertOrUpdateDailyActivity(
+                    DailyActivityDbModel(
+                        userId = userId,
+                        date = activity.date,
+                        completedTestsCount = activity.completedTestsCount
+                    )
+                )
+            }
+        } catch (e: Exception) {
+            throw DataSourceException.DatabaseError("Failed to save daily activity", e)
+        }
+    }
+
     suspend fun markLessonAsCompleted(userId: String, lessonId: String) {
         try {
             val currentUserProgress = getUserProgress(userId).first()
@@ -225,4 +280,9 @@ class ProgressLocalDataSource @Inject constructor(
             throw DataSourceException.DatabaseError("Failed to mark lesson as completed", e)
         }
     }
+
+    private fun DailyActivityDbModel.toDailyActivity() = DailyActivity(
+        date = date,
+        completedTestsCount = completedTestsCount
+    )
 }

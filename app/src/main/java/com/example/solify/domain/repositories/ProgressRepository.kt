@@ -1,6 +1,8 @@
 package com.example.solify.domain.repositories
 
+import com.example.solify.domain.entities.progress.DailyActivity
 import com.example.solify.domain.entities.progress.ExerciseProgress
+import com.example.solify.domain.entities.progress.WeeklyActivityDay
 import com.example.solify.domain.entities.progress.LessonProgress
 import com.example.solify.domain.entities.progress.TestProgress
 import kotlinx.coroutines.flow.Flow
@@ -13,6 +15,11 @@ interface ProgressRepository {
     suspend fun clearLessonProgress(userId: String, lessonId: String)
     suspend fun syncLessonsProgress(userId: String)
     suspend fun syncTestsProgress(userId: String)
+    suspend fun syncDailyActivity(userId: String)
+
+    // Daily activity
+    fun observeWeeklyActivity(userId: String): Flow<List<WeeklyActivityDay>>
+    suspend fun recordTestCompletionForToday(userId: String)
 
     // Test Progress
     fun getTestProgress(userId: String, testId: String): Flow<TestProgress?>

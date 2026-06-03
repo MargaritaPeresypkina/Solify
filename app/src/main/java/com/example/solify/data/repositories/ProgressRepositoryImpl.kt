@@ -5,15 +5,21 @@ import com.example.solify.data.remote.firebase.data_source.ProgressRemoteDataSou
 import com.example.solify.data.remote.firebase.dto.ExerciseProgressDto
 import com.example.solify.data.remote.firebase.dto.LessonProgressDto
 import com.example.solify.data.remote.firebase.dto.TestProgressDto
+import com.example.solify.domain.entities.progress.DailyActivity
 import com.example.solify.domain.entities.progress.ExerciseProgress
+import com.example.solify.domain.entities.progress.WeeklyActivityDay
+import com.example.solify.domain.utils.DailyActivityDates
 import com.example.solify.domain.entities.progress.LessonProgress
 import com.example.solify.domain.entities.progress.TestProgress
 import com.example.solify.domain.entities.progress.withDerivedStatus
+import com.example.solify.domain.repositories.LessonRepository
 import com.example.solify.domain.repositories.ProgressRepository
+import com.example.solify.domain.repositories.UserRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import com.example.solify.data.local.mappers.toDomain as exerciseProgressDtoToDomain
 import com.example.solify.data.remote.firebase.mappers.toDomain
@@ -23,7 +29,9 @@ import javax.inject.Singleton
 @Singleton
 class ProgressRepositoryImpl @Inject constructor(
     private val localDataSource: ProgressLocalDataSource,
-    private val remoteDataSource: ProgressRemoteDataSource
+    private val remoteDataSource: ProgressRemoteDataSource,
+    private val lessonRepository: LessonRepository,
+    private val userRepository: UserRepository
 ) : ProgressRepository {
     override fun getLessonProgress(userId: String, lessonId: String): Flow<LessonProgress?> =
         localDataSource.getLessonProgress(userId, lessonId)
@@ -43,7 +51,9 @@ class ProgressRepositoryImpl @Inject constructor(
             pendingTests = normalized.pendingTests
         )
         remoteDataSource.updateLessonProgress(userId, dto)
-        localDataSource.insertOrUpdateLessonProgress(userId, normalized)
+        if (ensureLessonProgressParents(userId, normalized.lessonId)) {
+            localDataSource.insertOrUpdateLessonProgress(userId, normalized)
+        }
     }
 
     override suspend fun clearLessonProgress(userId: String, lessonId: String) {
@@ -94,6 +104,46 @@ class ProgressRepositoryImpl @Inject constructor(
 
     override suspend fun syncTestsProgress(userId: String) {
         syncAllTestsProgressFromRemote(userId)
+    }
+
+    override suspend fun syncDailyActivity(userId: String) = withContext(Dispatchers.IO) {
+        val sinceDate = DailyActivityDates.sevenDaysAgoKey()
+        val remote = remoteDataSource.getDailyActivitySince(userId, sinceDate).getOrNull() ?: return@withContext
+        val local = localDataSource.getDailyActivitySince(userId, sinceDate)
+        val localByDate = local.associateBy { it.date }
+        val merged = remote.map { remoteEntry ->
+            val localCount = localByDate[remoteEntry.date]?.completedTestsCount ?: 0
+            DailyActivity(
+                date = remoteEntry.date,
+                completedTestsCount = maxOf(remoteEntry.completedTestsCount, localCount)
+            )
+        } + local.filter { localEntry ->
+            remote.none { it.date == localEntry.date }
+        }
+        localDataSource.insertOrUpdateDailyActivities(userId, merged.distinctBy { it.date })
+    }
+
+    override fun observeWeeklyActivity(userId: String): Flow<List<WeeklyActivityDay>> {
+        val sinceDate = DailyActivityDates.sevenDaysAgoKey()
+        return localDataSource.observeDailyActivitySince(userId, sinceDate).map { stored ->
+            val countsByDate = stored.associate { it.date to it.completedTestsCount }
+            DailyActivityDates.lastSevenDayKeys().map { date ->
+                WeeklyActivityDay(
+                    date = date,
+                    dayLabel = DailyActivityDates.dayLabel(date),
+                    completedTestsCount = countsByDate[date] ?: 0
+                )
+            }
+        }
+    }
+
+    override suspend fun recordTestCompletionForToday(userId: String) {
+        withContext(Dispatchers.IO) {
+            if (!ensureUserInLocalDatabase(userId)) return@withContext
+            val today = DailyActivityDates.todayKey()
+            localDataSource.incrementDailyActivity(userId, today)
+            remoteDataSource.incrementDailyActivity(userId, today)
+        }
     }
 
     override suspend fun saveTestProgress(userId: String, progress: TestProgress) {
@@ -175,6 +225,7 @@ class ProgressRepositoryImpl @Inject constructor(
     }
     override suspend fun completeTest(userId: String, lessonId: String, testId: String) {
         val lessonProgress = localDataSource.getLessonProgress(userId, lessonId).first() ?: return
+        val wasAlreadyCompleted = lessonProgress.completedTests.contains(testId)
         val updatedCompleted = lessonProgress.completedTests.toMutableSet()
         updatedCompleted.add(testId)
 
@@ -187,6 +238,10 @@ class ProgressRepositoryImpl @Inject constructor(
         ).normalize()
 
         saveLessonProgress(userId, updatedProgress)
+
+        if (!wasAlreadyCompleted) {
+            recordTestCompletionForToday(userId)
+        }
     }
 
     override suspend fun getNextPendingTest(userId: String, lessonId: String): String? {
@@ -195,13 +250,26 @@ class ProgressRepositoryImpl @Inject constructor(
     }
 
     private suspend fun syncAllLessonsProgressFromRemote(userId: String) = withContext(Dispatchers.IO) {
+        if (!ensureUserInLocalDatabase(userId)) return@withContext
         val remote = remoteDataSource.getAllLessonsProgress(userId).getOrNull() ?: return@withContext
         remote.forEach { dto ->
             val remoteProgress = dto.toDomain().normalize()
+            if (!ensureLessonProgressParents(userId, remoteProgress.lessonId)) return@forEach
             val localProgress = localDataSource.getLessonProgress(userId, remoteProgress.lessonId).first()
             val merged = mergeLessonProgress(localProgress, remoteProgress).normalize()
             localDataSource.insertOrUpdateLessonProgress(userId, merged)
         }
+    }
+
+    private suspend fun ensureUserInLocalDatabase(userId: String): Boolean {
+        val userIsInLocalDatabase = userRepository.getUserById(userId).isSuccess
+        return userIsInLocalDatabase
+    }
+
+    private suspend fun ensureLessonProgressParents(userId: String, lessonId: String): Boolean {
+        val userLessonProgressParents = ensureUserInLocalDatabase(userId)
+        val lessonLessonProgressParents = lessonRepository.getLessonById(lessonId).isSuccess
+        return userLessonProgressParents && lessonLessonProgressParents
     }
 
     private suspend fun syncAllTestsProgressFromRemote(userId: String) = withContext(Dispatchers.IO) {

@@ -23,6 +23,7 @@ import com.example.solify.data.local.db_models.TheoryItemDbModel
 import com.example.solify.data.local.db_models.TrainerDbModel
 import com.example.solify.data.local.db_models.TrainingDbModel
 import com.example.solify.data.local.db_models.UserDbModel
+import com.example.solify.data.local.db_models.DailyActivityDbModel
 import com.example.solify.data.local.db_models.UserProgressDbModel
 
 @Database(
@@ -30,6 +31,7 @@ import com.example.solify.data.local.db_models.UserProgressDbModel
         // Users
         UserDbModel::class,
         UserProgressDbModel::class,
+        DailyActivityDbModel::class,
         LessonProgressDbModel::class,
         TestProgressDbModel::class,
         ExerciseProgressDbModel::class,
@@ -46,7 +48,7 @@ import com.example.solify.data.local.db_models.UserProgressDbModel
         ExerciseDbModel::class,
         ExerciseAnswerOptionDbModel::class
     ],
-    version = 16,
+    version = 17,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

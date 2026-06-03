@@ -1,10 +1,13 @@
 package com.example.solify.data.remote.firebase.data_source
 
 import android.util.Log
+import com.example.solify.data.remote.firebase.dto.DailyActivityDto
 import com.example.solify.data.remote.firebase.dto.ExerciseProgressDto
 import com.example.solify.data.remote.firebase.dto.LessonProgressDto
 import com.example.solify.data.remote.firebase.dto.TestProgressDto
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
@@ -241,6 +244,77 @@ class ProgressRemoteDataSource @Inject constructor(
                 Result.success(Unit)
             } catch (e: Exception) {
                 Log.e("ProgressRemote", "Error updating exercise progress", e)
+                Result.failure(e)
+            }
+        }
+    }
+
+    suspend fun getDailyActivitySince(
+        userId: String,
+        sinceDate: String
+    ): Result<List<DailyActivityDto>> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val snapshot = firestore
+                    .collection("users")
+                    .document(userId)
+                    .collection("daily_activity")
+                    .whereGreaterThanOrEqualTo(
+                        com.google.firebase.firestore.FieldPath.documentId(),
+                        sinceDate
+                    )
+                    .get()
+                    .await()
+
+                val activities = snapshot.documents.mapNotNull { doc ->
+                    val count = (doc.getLong("completedTestsCount") ?: 0L).toInt()
+                    DailyActivityDto(date = doc.id, completedTestsCount = count)
+                }
+                Result.success(activities)
+            } catch (e: Exception) {
+                Log.e("ProgressRemote", "Error loading daily activity", e)
+                Result.failure(e)
+            }
+        }
+    }
+
+    suspend fun incrementDailyActivity(userId: String, date: String): Result<Unit> {
+        return withContext(Dispatchers.IO) {
+            try {
+                firestore
+                    .collection("users")
+                    .document(userId)
+                    .collection("daily_activity")
+                    .document(date)
+                    .set(
+                        mapOf("completedTestsCount" to FieldValue.increment(1)),
+                        SetOptions.merge()
+                    )
+                    .await()
+                Result.success(Unit)
+            } catch (e: Exception) {
+                Log.e("ProgressRemote", "Error incrementing daily activity", e)
+                Result.failure(e)
+            }
+        }
+    }
+
+    suspend fun upsertDailyActivity(userId: String, activity: DailyActivityDto): Result<Unit> {
+        return withContext(Dispatchers.IO) {
+            try {
+                firestore
+                    .collection("users")
+                    .document(userId)
+                    .collection("daily_activity")
+                    .document(activity.date)
+                    .set(
+                        mapOf("completedTestsCount" to activity.completedTestsCount),
+                        SetOptions.merge()
+                    )
+                    .await()
+                Result.success(Unit)
+            } catch (e: Exception) {
+                Log.e("ProgressRemote", "Error upserting daily activity", e)
                 Result.failure(e)
             }
         }

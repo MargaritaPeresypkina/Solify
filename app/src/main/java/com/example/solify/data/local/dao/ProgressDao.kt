@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import com.example.solify.data.local.db_models.DailyActivityDbModel
 import com.example.solify.data.local.db_models.ExerciseProgressDbModel
 import com.example.solify.data.local.db_models.LessonProgressDbModel
 import com.example.solify.data.local.db_models.TestProgressDbModel
@@ -13,6 +14,38 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ProgressDao {
+
+    // Daily activity
+
+    @Query(
+        """
+        SELECT * FROM daily_activity
+        WHERE userId = :userId AND date >= :sinceDate
+        ORDER BY date ASC
+        """
+    )
+    fun observeDailyActivitySince(userId: String, sinceDate: String): Flow<List<DailyActivityDbModel>>
+
+    @Query(
+        """
+        SELECT * FROM daily_activity
+        WHERE userId = :userId AND date >= :sinceDate
+        ORDER BY date ASC
+        """
+    )
+    suspend fun getDailyActivitySince(userId: String, sinceDate: String): List<DailyActivityDbModel>
+
+    @Query("SELECT * FROM daily_activity WHERE userId = :userId AND date = :date LIMIT 1")
+    suspend fun getDailyActivity(userId: String, date: String): DailyActivityDbModel?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertOrUpdateDailyActivity(activity: DailyActivityDbModel)
+
+    @Query("SELECT EXISTS(SELECT 1 FROM users WHERE id = :userId)")
+    suspend fun hasUser(userId: String): Boolean
+
+    @Query("SELECT EXISTS(SELECT 1 FROM lessons WHERE id = :lessonId)")
+    suspend fun hasLesson(lessonId: String): Boolean
 
     // Read
 
