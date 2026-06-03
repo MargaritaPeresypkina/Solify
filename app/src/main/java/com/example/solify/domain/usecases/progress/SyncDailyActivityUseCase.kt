@@ -1,0 +1,12 @@
+package com.example.solify.domain.usecases.progress
+
+import com.example.solify.domain.repositories.ProgressRepository
+import javax.inject.Inject
+
+class SyncDailyActivityUseCase @Inject constructor(
+    private val progressRepository: ProgressRepository
+) {
+    suspend operator fun invoke(userId: String) {
+        progressRepository.syncDailyActivity(userId)
+    }
+}
