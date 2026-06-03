@@ -6,13 +6,16 @@ import androidx.lifecycle.viewModelScope
 import com.example.solify.R
 import com.example.solify.domain.entities.user.User
 import com.example.solify.domain.usecases.auth.LogoutUserUseCase
+import com.example.solify.domain.entities.progress.TestsCompletionOverview
 import com.example.solify.domain.entities.progress.WeeklyActivityDay
+import com.example.solify.domain.usecases.progress.ObserveTestsCompletionPercentUseCase
 import com.example.solify.domain.usecases.progress.ObserveWeeklyActivityUseCase
 import com.example.solify.domain.usecases.user.GetUserBadgeUseCase
 import com.example.solify.domain.usecases.user.ObserveCurrentUserUseCase
 import com.example.solify.domain.usecases.user.UpdateUserAvatarUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -25,13 +28,15 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     observeCurrentUserUseCase: ObserveCurrentUserUseCase,
     private val logoutUserUseCase: LogoutUserUseCase,
     private val updateUserAvatarUseCase: UpdateUserAvatarUseCase,
     private val getUserBadgeUseCase: GetUserBadgeUseCase,
-    private val observeWeeklyActivityUseCase: ObserveWeeklyActivityUseCase
+    private val observeWeeklyActivityUseCase: ObserveWeeklyActivityUseCase,
+    private val observeTestsCompletionPercentUseCase: ObserveTestsCompletionPercentUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ProfileUiState(isLoading = true))
@@ -58,10 +63,35 @@ class ProfileViewModel @Inject constructor(
             initialValue = emptyList()
         )
 
+    private val testsCompletionFlow = userFlow
+        .flatMapLatest { user ->
+            if (user == null) {
+                emptyFlow()
+            } else {
+                observeTestsCompletionPercentUseCase(user.id)
+            }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = TestsCompletionOverview()
+        )
+
     init {
         viewModelScope.launch {
             weeklyActivityFlow.collect { days ->
                 _uiState.update { it.copy(weeklyActivityDays = days) }
+            }
+        }
+
+        viewModelScope.launch {
+            testsCompletionFlow.collect { overview ->
+                _uiState.update {
+                    it.copy(
+                        testsCompletionPercent = overview.percent,
+                        completedTestsCount = overview.completedTests
+                    )
+                }
             }
         }
 
@@ -169,7 +199,9 @@ data class ProfileUiState(
     val isLoggedOut: Boolean = false,
     val userBadgeRes: Int = R.drawable.none_medal,
     val userLevel: String = "Let's try",
-    val weeklyActivityDays: List<WeeklyActivityDay> = emptyList()
+    val weeklyActivityDays: List<WeeklyActivityDay> = emptyList(),
+    val testsCompletionPercent: Int = 0,
+    val completedTestsCount: Int = 0
 )
 
 sealed class ProfileCommand {

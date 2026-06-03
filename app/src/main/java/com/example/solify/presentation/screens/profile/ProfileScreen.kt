@@ -46,6 +46,7 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.solify.R
 import com.example.solify.presentation.navigation.BottomNavigationBar
+import com.example.solify.presentation.navigation.Screen
 import com.example.solify.presentation.ui.theme.Grey300
 
 @Composable
@@ -137,24 +138,13 @@ fun ProfileScreen(
                         verticalAlignment = Alignment.Top,
                         horizontalArrangement = Arrangement.Center
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .clip(CircleShape)
-                                .size(avatarSize.dp)
-                                .zIndex(1f)
-                                .clickable {
-                                    imagePicker.launch("image/*")
-                                }
-                        ) {
-
-                            AvatarImage(
-                                imageUrl = user.avatarUrl,
-                                onClick = {
-                                    imagePicker.launch("image/*")
-                                },
-                                size = avatarSize
-                            )
-                        }
+                        AvatarWithProgressRing(
+                            completionPercent = uiState.testsCompletionPercent,
+                            avatarSize = avatarSize,
+                            imageUrl = user.avatarUrl,
+                            onClick = { imagePicker.launch("image/*") },
+                            modifier = Modifier.zIndex(1f)
+                        )
                     }
                 }
 
@@ -203,6 +193,16 @@ fun ProfileScreen(
                             Spacer(Modifier.height(17.dp))
                             WeeklyActivityChart(
                                 days = uiState.weeklyActivityDays,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                            Spacer(Modifier.height(13.dp))
+                            TestsCompletionProgressCard(
+                                completionPercent = uiState.testsCompletionPercent,
+                                completedTestsCount = uiState.completedTestsCount,
+                                userLevel = uiState.userLevel,
+                                onSeeProgressClick = {
+
+                                },
                                 modifier = Modifier.fillMaxWidth()
                             )
                             Spacer(Modifier.height(24.dp))
