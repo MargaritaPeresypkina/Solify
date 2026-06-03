@@ -51,12 +51,12 @@ fun WeeklyActivityChart(
                 shape = ChartCardShape,
                 shadow = Shadow(
                     radius = 30.dp,
-                    color = Black100,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
                     offset = DpOffset(0.dp, 0.dp)
                 )
             )
             .clip(ChartCardShape)
-            .background(White300)
+            .background(MaterialTheme.colorScheme.surfaceTint)
             .padding(top = 11.dp, bottom = 14.dp, start = 16.dp, end = 16.dp)
     ) {
         Row(
@@ -111,10 +111,14 @@ private data class ActivityBarStyle(
     val rangeLabel: String
 )
 
-private fun activityStyle(completedTests: Int): ActivityBarStyle = when {
-    completedTests > 7 -> ActivityBarStyle(140.dp, Brown300, "> 7")
-    completedTests >= 5 -> ActivityBarStyle(112.dp, Burgundy200, "5-6")
-    completedTests >= 3 -> ActivityBarStyle(84.dp, Yellow200, "3-4")
-    completedTests >= 1 -> ActivityBarStyle(56.dp, LightYellow300, "1-2")
-    else -> ActivityBarStyle(28.dp, Grey300, "0")
+@Composable
+private fun activityStyle(completedTests: Int): ActivityBarStyle {
+    val colors = MaterialTheme.colorScheme
+    return when {
+        completedTests > 7 -> ActivityBarStyle(140.dp, colors.onPrimary, "> 7")
+        completedTests >= 5 -> ActivityBarStyle(112.dp, colors.secondary, "5-6")
+        completedTests >= 3 -> ActivityBarStyle(84.dp, colors.primaryContainer, "3-4")
+        completedTests >= 1 -> ActivityBarStyle(56.dp, LightYellow300, "1-2")
+        else -> ActivityBarStyle(28.dp, Grey300, "0")
+    }
 }

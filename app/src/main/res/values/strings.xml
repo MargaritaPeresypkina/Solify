@@ -26,4 +26,9 @@
     <string name="test_random_order">Random question order</string>
     <string name="test_shuffle_questions">Shuffle question order</string>
     <string name="test_start">Start</string>
+    <string name="your_progress">Your progress</string>
+    <string name="tests_label">tests</string>
+    <string name="exercises_label">exercises</string>
+    <string name="progress_tests_description">Completed in grammar technics course</string>
+    <string name="progress_exercises_description">Number of correctly completed musical training sessions</string>
 </resources>

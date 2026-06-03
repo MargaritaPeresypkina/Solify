@@ -201,7 +201,7 @@ fun ProfileScreen(
                                 completedTestsCount = uiState.completedTestsCount,
                                 userLevel = uiState.userLevel,
                                 onSeeProgressClick = {
-
+                                    navController.navigate(Screen.YourProgress.route)
                                 },
                                 modifier = Modifier.fillMaxWidth()
                             )

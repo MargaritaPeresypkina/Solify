@@ -27,10 +27,10 @@ private val ProgressStrokeWidth = 2.dp
 @Composable
 fun TestsCompletionProgressCard(
     completionPercent: Int,
-    completedTestsCount: Int,
     userLevel: String,
-    onSeeProgressClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    completedTestsCount: Int? = null,
+    onSeeProgressClick: (() -> Unit)? = null,
 ) {
     Row(
         modifier = modifier
@@ -54,20 +54,30 @@ fun TestsCompletionProgressCard(
                 style = MaterialTheme.typography.bodyLarge
             )
             Spacer(Modifier.height(4.dp))
-            Text(
-                text = "You have passed $completedTestsCount tests",
-                color = MaterialTheme.colorScheme.onPrimary,
-                style = MaterialTheme.typography.headlineSmall
-            )
-            Spacer(Modifier.height(10.dp))
-            Text(
-                text = "See your progress",
-                color = MaterialTheme.colorScheme.secondary,
-                style = MaterialTheme.typography.titleSmall,
-                modifier = Modifier
-                    .offset(x = (-10).dp)
-                    .clickable(onClick = onSeeProgressClick)
-            )
+            if (completedTestsCount != null) {
+                Text(
+                    text = "You have passed $completedTestsCount tests",
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    style = MaterialTheme.typography.headlineSmall
+                )
+            } else {
+                Text(
+                    text = "The overall progress for courses and lessons is displayed here.",
+                    color = MaterialTheme.colorScheme.onPrimary,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+            if (onSeeProgressClick != null) {
+                Spacer(Modifier.height(10.dp))
+                Text(
+                    text = "See your progress",
+                    color = MaterialTheme.colorScheme.secondary,
+                    style = MaterialTheme.typography.titleSmall,
+                    modifier = Modifier
+                        .offset(x = (-10).dp)
+                        .clickable(onClick = onSeeProgressClick)
+                )
+            }
         }
     }
 }

@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -15,8 +16,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
@@ -43,7 +47,15 @@ fun BottomNavigationBar(
     NavigationBar(
         modifier = modifier
             .fillMaxWidth()
-            .systemBarsPadding(),
+            .systemBarsPadding()
+            .dropShadow(
+                shape = RoundedCornerShape(0.dp),
+                shadow = Shadow(
+                    radius = 21.dp,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    offset = DpOffset(2.dp, (-5).dp)
+                )
+            ),
         containerColor = Brown300,
         tonalElevation = 10.dp,
         windowInsets = WindowInsets()

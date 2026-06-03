@@ -21,6 +21,7 @@ import com.example.solify.presentation.screens.theory.TheoryScreen
 import com.example.solify.presentation.screens.lessons.LessonsScreen
 import com.example.solify.presentation.screens.login.LoginScreen
 import com.example.solify.presentation.screens.profile.ProfileScreen
+import com.example.solify.presentation.screens.your_progress.YourProgressScreen
 import com.example.solify.presentation.screens.register.RegisterScreen
 import com.example.solify.presentation.screens.trainers.TrainersScreen
 import com.example.solify.presentation.screens.trainings.TrainingScreen
@@ -171,6 +172,12 @@ fun NavGraph(
                 }
             )
         }
+
+        composable(Screen.YourProgress.route) {
+            YourProgressScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
     }
 }
 
@@ -181,6 +188,7 @@ sealed class Screen(val route: String) {
     data object MainTabs : Screen("main_tabs")
     data object Profile : Screen("profile")
     data object EditProfile : Screen("edit_profile")
+    data object YourProgress : Screen("your_progress")
     data object Training : Screen("training")
     data object Trainers : Screen("trainers/{training_id}") {
         fun createRoute(trainingId: String): String = "trainers/$trainingId"
