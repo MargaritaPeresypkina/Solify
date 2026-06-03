@@ -12,6 +12,7 @@ import com.example.solify.domain.utils.DailyActivityDates
 import com.example.solify.domain.entities.progress.LessonProgress
 import com.example.solify.domain.entities.progress.TestProgress
 import com.example.solify.domain.entities.progress.TestsCompletionSnapshot
+import com.example.solify.domain.entities.progress.UserProgress
 import com.example.solify.domain.entities.progress.withDerivedStatus
 import com.example.solify.domain.repositories.LessonRepository
 import com.example.solify.domain.repositories.ProgressRepository
@@ -404,4 +405,32 @@ class ProgressRepositoryImpl @Inject constructor(
                 .flatMap { it.completedTests }
                 .toSet()
         }
+
+    override fun observeCompletedExercisesCount(userId: String): Flow<Int> =
+        localDataSource.getUserProgress(userId)
+            .map { it?.completedExercisesCount ?: 0 }
+
+    override suspend fun recordCompletedExercise(userId: String) {
+        withContext(Dispatchers.IO) {
+            localDataSource.incrementCompletedExercisesCount(userId)
+            remoteDataSource.incrementCompletedExercisesCount(userId)
+        }
+    }
+
+    override suspend fun syncCompletedExercisesCount(userId: String) {
+        withContext(Dispatchers.IO) {
+            val remoteCount = remoteDataSource.getCompletedExercisesCount(userId).getOrNull() ?: return@withContext
+            val local = localDataSource.getUserProgress(userId).first()
+            val mergedCount = maxOf(remoteCount, local?.completedExercisesCount ?: 0)
+            val updated = UserProgress(
+                userId = userId,
+                completedLessons = local?.completedLessons.orEmpty(),
+                completedExercisesCount = mergedCount
+            )
+            localDataSource.insertOrUpdateUserProgress(updated)
+            if (mergedCount > remoteCount) {
+                remoteDataSource.upsertCompletedExercisesCount(userId, mergedCount)
+            }
+        }
+    }
 }

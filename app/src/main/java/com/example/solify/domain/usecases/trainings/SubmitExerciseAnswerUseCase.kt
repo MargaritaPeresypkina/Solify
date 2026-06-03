@@ -29,6 +29,8 @@ class SubmitExerciseAnswerUseCase @Inject constructor(
             }
             val totalExercises = allExercises.size
 
+            val wasAlreadyCompleted = exerciseId in currentProgress.completedExercises
+
             val updatedProgress = if (isCorrect) {
                 ExerciseProgress(
                     trainerId = trainerId,
@@ -44,6 +46,10 @@ class SubmitExerciseAnswerUseCase @Inject constructor(
                     completedExercises = currentProgress.completedExercises,
                     pendingExercises = newPending
                 )
+            }
+
+            if (isCorrect && !wasAlreadyCompleted) {
+                progressRepository.recordCompletedExercise(userId)
             }
 
             val isSessionCompleted = updatedProgress.completedExercises.size == totalExercises

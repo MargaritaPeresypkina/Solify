@@ -36,13 +36,25 @@ class ProgressLocalDataSource @Inject constructor(
     
     suspend fun insertOrUpdateUserProgress(progress: UserProgress) {
         try {
-            val dbModel = UserProgressDbModel(
-                userId = progress.userId,
-                completedLessons = progress.completedLessons.toList()
-            )
-            progressDao.insertOrUpdateUserProgress(dbModel)
+            progressDao.insertOrUpdateUserProgress(progress.toDbModel())
         } catch (e: Exception) {
             throw DataSourceException.DatabaseError("Failed to insert user progress", e)
+        }
+    }
+
+    suspend fun incrementCompletedExercisesCount(userId: String) {
+        try {
+            val current = getUserProgress(userId).first()
+            val updated = UserProgress(
+                userId = userId,
+                completedLessons = current?.completedLessons.orEmpty(),
+                completedExercisesCount = (current?.completedExercisesCount ?: 0) + 1
+            )
+            insertOrUpdateUserProgress(updated)
+        } catch (e: DataSourceException) {
+            throw e
+        } catch (e: Exception) {
+            throw DataSourceException.DatabaseError("Failed to increment completed exercises", e)
         }
     }
     
@@ -270,7 +282,8 @@ class ProgressLocalDataSource @Inject constructor(
 
             val updatedProgress = UserProgress(
                 userId = userId,
-                completedLessons = completedLessons.toSet()
+                completedLessons = completedLessons.toSet(),
+                completedExercisesCount = currentUserProgress?.completedExercisesCount ?: 0
             )
 
             insertOrUpdateUserProgress(updatedProgress)

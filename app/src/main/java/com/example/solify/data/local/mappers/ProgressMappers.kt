@@ -137,12 +137,14 @@ fun UserProgressDbModel.toDomain(
     return UserProgress(
         userId = userId,
         completedLessons = completedLessons.toSet(),
+        completedExercisesCount = completedExercisesCount,
     )
 }
 
 fun UserProgress.toDbModel(): UserProgressDbModel {
     return UserProgressDbModel(
         userId = userId,
-        completedLessons = completedLessons.toList()
+        completedLessons = completedLessons.toList(),
+        completedExercisesCount = completedExercisesCount,
     )
 }

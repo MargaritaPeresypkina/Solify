@@ -320,6 +320,61 @@ class ProgressRemoteDataSource @Inject constructor(
         }
     }
 
+    suspend fun getCompletedExercisesCount(userId: String): Result<Int> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val document = firestore
+                    .collection("users")
+                    .document(userId)
+                    .get()
+                    .await()
+                val count = (document.getLong("completedExercisesCount") ?: 0L).toInt()
+                Result.success(count)
+            } catch (e: Exception) {
+                Log.e("ProgressRemote", "Error loading completed exercises count", e)
+                Result.failure(e)
+            }
+        }
+    }
+
+    suspend fun incrementCompletedExercisesCount(userId: String): Result<Unit> {
+        return withContext(Dispatchers.IO) {
+            try {
+                firestore
+                    .collection("users")
+                    .document(userId)
+                    .set(
+                        mapOf("completedExercisesCount" to FieldValue.increment(1)),
+                        SetOptions.merge()
+                    )
+                    .await()
+                Result.success(Unit)
+            } catch (e: Exception) {
+                Log.e("ProgressRemote", "Error incrementing completed exercises count", e)
+                Result.failure(e)
+            }
+        }
+    }
+
+    suspend fun upsertCompletedExercisesCount(userId: String, count: Int): Result<Unit> {
+        return withContext(Dispatchers.IO) {
+            try {
+                firestore
+                    .collection("users")
+                    .document(userId)
+                    .set(
+                        mapOf("completedExercisesCount" to count),
+                        SetOptions.merge()
+                    )
+                    .await()
+                Result.success(Unit)
+            } catch (e: Exception) {
+                Log.e("ProgressRemote", "Error upserting completed exercises count", e)
+                Result.failure(e)
+            }
+        }
+    }
+
     private fun readExerciseStatus(data: Map<String, Any>): String {
         val raw = data["status"] as? String
         if (!raw.isNullOrBlank()) return raw

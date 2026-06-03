@@ -22,6 +22,10 @@ interface ProgressRepository {
     fun observeWeeklyActivity(userId: String): Flow<List<WeeklyActivityDay>>
     suspend fun recordTestCompletionForToday(userId: String)
 
+    fun observeCompletedExercisesCount(userId: String): Flow<Int>
+    suspend fun recordCompletedExercise(userId: String)
+    suspend fun syncCompletedExercisesCount(userId: String)
+
     // Test Progress
     fun getTestProgress(userId: String, testId: String): Flow<TestProgress?>
     fun observeTestProgress(userId: String, testId: String): Flow<TestProgress?>

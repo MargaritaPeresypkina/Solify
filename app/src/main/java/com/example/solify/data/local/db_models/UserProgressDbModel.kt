@@ -17,5 +17,6 @@ import androidx.room.Index
 )
 data class UserProgressDbModel(
     val userId: String,
-    val completedLessons: List<String>  //"lessonId1,lessonId2,lessonId3"
+    val completedLessons: List<String>,  //"lessonId1,lessonId2,lessonId3"
+    val completedExercisesCount: Int = 0,
 )
