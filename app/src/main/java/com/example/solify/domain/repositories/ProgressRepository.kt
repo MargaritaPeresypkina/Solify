@@ -1,6 +1,7 @@
 package com.example.solify.domain.repositories
 
 import com.example.solify.domain.entities.progress.DailyActivity
+import com.example.solify.domain.entities.progress.TestsCompletionSnapshot
 import com.example.solify.domain.entities.progress.ExerciseProgress
 import com.example.solify.domain.entities.progress.WeeklyActivityDay
 import com.example.solify.domain.entities.progress.LessonProgress
@@ -41,4 +42,11 @@ interface ProgressRepository {
     suspend fun completeQuestion(userId: String, lessonId: String, testId: String, questionId: String)
     suspend fun completeTest(userId: String, lessonId: String, testId: String)
     suspend fun getNextPendingTest(userId: String, lessonId: String): String?
+
+    suspend fun fetchTestsCompletionSnapshot(
+        userId: String,
+        allTestIds: Set<String>
+    ): TestsCompletionSnapshot
+
+    suspend fun fetchRemoteCompletedTestIds(userId: String): Set<String>
 }

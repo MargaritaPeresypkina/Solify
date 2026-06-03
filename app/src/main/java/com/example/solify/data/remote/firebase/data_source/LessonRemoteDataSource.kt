@@ -119,6 +119,29 @@ class LessonRemoteDataSource @Inject constructor(
         }.sortedBy { it.order }
     }
 
+    suspend fun getAllTestIds(): Result<Set<String>> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val lessonsResult = getAllLessons()
+                if (lessonsResult.isFailure) {
+                    return@withContext Result.failure(
+                        lessonsResult.exceptionOrNull() ?: Exception("Failed to load lessons")
+                    )
+                }
+                val testIds = mutableSetOf<String>()
+                lessonsResult.getOrThrow().forEach { lesson ->
+                    val tests = loadTests("lessons/${lesson.id}")
+                    tests.forEach { testIds.add(it.id) }
+                }
+                Log.d("LessonRemote", "Loaded ${testIds.size} test ids from Firebase")
+                Result.success(testIds)
+            } catch (e: Exception) {
+                Log.e("LessonRemote", "Error loading all test ids", e)
+                Result.failure(e)
+            }
+        }
+    }
+
     private suspend fun loadTests(lessonPath: String): List<Test> {
         val snapshot = firestore.collection("$lessonPath/tests").get().await()
         return snapshot.documents.mapNotNull { document ->

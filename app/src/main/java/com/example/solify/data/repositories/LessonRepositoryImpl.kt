@@ -31,6 +31,9 @@ class LessonRepositoryImpl @Inject constructor(
     override fun observeTestIdsByLesson(): Flow<Map<String, List<String>>> =
         localDataSource.observeTestIdsByLesson()
 
+    override suspend fun fetchAllTestIdsFromRemote(): Result<Set<String>> =
+        remoteDataSource.getAllTestIds()
+
     override suspend fun syncLessons(): Result<Unit> = withContext(Dispatchers.IO) {
         try {
             val remoteLessons = remoteDataSource.getAllLessons().getOrElse { return@withContext Result.failure(it) }

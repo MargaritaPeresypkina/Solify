@@ -11,6 +11,7 @@ import com.example.solify.domain.entities.progress.WeeklyActivityDay
 import com.example.solify.domain.utils.DailyActivityDates
 import com.example.solify.domain.entities.progress.LessonProgress
 import com.example.solify.domain.entities.progress.TestProgress
+import com.example.solify.domain.entities.progress.TestsCompletionSnapshot
 import com.example.solify.domain.entities.progress.withDerivedStatus
 import com.example.solify.domain.repositories.LessonRepository
 import com.example.solify.domain.repositories.ProgressRepository
@@ -362,4 +363,45 @@ class ProgressRepositoryImpl @Inject constructor(
 
     private fun isExerciseProgressEmpty(progress: ExerciseProgress): Boolean =
         progress.completedExercises.isEmpty() && progress.pendingExercises.isEmpty()
+
+    override suspend fun fetchTestsCompletionSnapshot(
+        userId: String,
+        allTestIds: Set<String>
+    ): TestsCompletionSnapshot = withContext(Dispatchers.IO) {
+        val localProgress = localDataSource.getAllLessonsProgress(userId).first()
+        val completedLocal = localProgress
+            .flatMap { it.completedTests }
+            .filter { it in allTestIds }
+            .toSet()
+            .size
+
+        val remoteLessonProgress = remoteDataSource.getAllLessonsProgress(userId).getOrNull().orEmpty()
+        val completedRemoteLesson = remoteLessonProgress
+            .flatMap { it.completedTests }
+            .filter { it in allTestIds }
+            .toSet()
+            .size
+
+        val remoteTestProgress = remoteDataSource.getAllTestsProgress(userId).getOrNull().orEmpty()
+        val testProgressCompletedLike = remoteTestProgress.count { dto ->
+            dto.status.equals("COMPLETED", ignoreCase = true) ||
+                (dto.pendingQuestions.isEmpty() && dto.completedQuestions.isNotEmpty())
+        }
+
+        TestsCompletionSnapshot(
+            completedFromLessonProgress = completedRemoteLesson,
+            completedFromLocalLessonProgress = completedLocal,
+            testProgressDocumentCount = remoteTestProgress.size,
+            testProgressCompletedLikeCount = testProgressCompletedLike
+        )
+    }
+
+    override suspend fun fetchRemoteCompletedTestIds(userId: String): Set<String> =
+        withContext(Dispatchers.IO) {
+            remoteDataSource.getAllLessonsProgress(userId)
+                .getOrNull()
+                .orEmpty()
+                .flatMap { it.completedTests }
+                .toSet()
+        }
 }

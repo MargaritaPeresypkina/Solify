@@ -15,6 +15,8 @@ interface LessonRepository {
 
     suspend fun syncLessons(): Result<Unit>
 
+    suspend fun fetchAllTestIdsFromRemote(): Result<Set<String>>
+
     suspend fun getTheoryItemById(
         theoryItemId: String
     ): Result<TheoryItem>
